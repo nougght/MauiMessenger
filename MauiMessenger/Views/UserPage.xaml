@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MauiMessenger.Views.UserPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="UserPage">
+
+    <Grid BackgroundColor="Transparent" RowDefinitions="60, Auto, *">
+
+        <ImageButton
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="10"
+            Aspect="AspectFill"
+            BackgroundColor="Transparent"
+            Clicked="BackButton_Clicked"
+            HorizontalOptions="Start"
+            Source="back.png"
+            VerticalOptions="Center"
+            WidthRequest="40" />
+
+        <Grid
+            Grid.Row="1"
+            Grid.Column="0"
+            Margin="10,10"
+            HorizontalOptions="Center"
+            RowDefinitions="200, Auto"
+            VerticalOptions="Center">
+
+            <Border
+                Grid.Row="0"
+                Margin="10"
+                HorizontalOptions="Center"
+                StrokeShape="RoundRectangle 100, 100, 100, 100"
+                StrokeThickness="0"
+                VerticalOptions="Center">
+                <Image
+                    Grid.Row="0"
+                    Aspect="AspectFit"
+                    HorizontalOptions="Center"
+                    Source="image.png"
+                    VerticalOptions="Start" />
+            </Border>
+            <Label
+                Grid.Row="1"
+                FontSize="30"
+                HorizontalOptions="Center"
+                Text="{Binding Chat.Name}"
+                VerticalOptions="End" />
+        </Grid>
+
+        <Grid
+            Grid.Row="2"
+            ColumnDefinitions="150, 150"
+            HorizontalOptions="Center"
+            RowDefinitions="200">
+
+
+            <Border
+                Grid.Column="1"
+                Margin="15"
+                HorizontalOptions="Center"
+                StrokeShape="RoundRectangle 50"
+                StrokeThickness="1"
+                VerticalOptions="Center">
+                <ImageButton
+                    Margin="30"
+                    Aspect="AspectFit"
+                    BackgroundColor="Transparent"
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AddContactCommand}"
+                    CommandParameter="{Binding PrivateChatUserId}"
+                    HorizontalOptions="Center"
+                    Source="add_user.png"
+                    VerticalOptions="Center" />
+            </Border>
+
+            <Border
+                Grid.Column="0"
+                Margin="15"
+                HorizontalOptions="Center"
+                StrokeShape="RoundRectangle 50"
+                StrokeThickness="1"
+                VerticalOptions="Center">
+                <ImageButton
+                    Margin="30"
+                    Aspect="AspectFit"
+                    BackgroundColor="Transparent"
+                    Clicked="ChatButton_Clicked"
+                    HorizontalOptions="Center"
+                    Source="chat_bubble.png"
+                    VerticalOptions="Center" />
+            </Border>
+
+        </Grid>
+
+    </Grid>
+</ContentPage>

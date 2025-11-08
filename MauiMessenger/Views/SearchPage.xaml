@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MauiMessenger.Views.SearchPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="SearchPage">
+    <Grid ColumnDefinitions="*" RowDefinitions="Auto, *, 10">
+        <Grid
+            Grid.Row="0"
+            BackgroundColor="Transparent"
+            ColumnDefinitions="Auto, *"
+            HeightRequest="60">
+            <ImageButton
+                Grid.Column="0"
+                Margin="10"
+                Aspect="AspectFit"
+                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.BackPageCommand}"
+                HorizontalOptions="Start"
+                Source="back.png"
+                VerticalOptions="Center"
+                WidthRequest="40" />
+            <SearchBar
+                Grid.Column="1"
+                HorizontalOptions="CenterAndExpand"
+                Placeholder="Поиск пользователей"
+                Text="{Binding SearchQuery, Mode=TwoWay}"
+                VerticalOptions="Center" />
+        </Grid>
+        <CollectionView
+            Grid.Row="1"
+            BackgroundColor="Transparent"
+            ItemsSource="{Binding SearchResults}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border
+                        HeightRequest="80"
+                        HorizontalOptions="FillAndExpand"
+                        VerticalOptions="Start">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CreatePrivateChatCommand}" CommandParameter="{Binding UserId}" />
+
+                        </Border.GestureRecognizers>
+                        <Grid BackgroundColor="Transparent" ColumnDefinitions="Auto, Auto, *">
+                            <Border
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Margin="10"
+                                HorizontalOptions="Center"
+                                StrokeShape="RoundRectangle 80,80,80,80"
+                                StrokeThickness="0">
+                                <Image
+                                    Aspect="AspectFit"
+                                    HorizontalOptions="Center"
+                                    SemanticProperties.Description="Cute dot net bot waving hi to you!"
+                                    Source="image.png"
+                                    VerticalOptions="Center" />
+                            </Border>
+                            <Label
+                                Grid.Row="0"
+                                Grid.Column="2"
+                                Margin="10,0,0,0"
+                                FontSize="30"
+                                HorizontalOptions="FillAndExpand"
+                                Text="{Binding Username}"
+                                VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <ListView
+            Grid.Row="2"
+            BackgroundColor="Transparent"
+            ItemsSource="{Binding Contacts}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <ViewCell.View>
+                            <Border
+                                HeightRequest="80"
+                                HorizontalOptions="FillAndExpand"
+                                VerticalOptions="Start">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ChatClickedCommand}" CommandParameter="{Binding Id}" />
+                                </Border.GestureRecognizers>
+                                <Grid
+                                    Grid.Row="0"
+                                    BackgroundColor="Transparent"
+                                    ColumnDefinitions="Auto, Auto, *">
+                                    <Border
+                                        Grid.Row="0"
+                                        Grid.Column="1"
+                                        Margin="10"
+                                        HorizontalOptions="Center"
+                                        StrokeShape="RoundRectangle 80,80,80,80"
+                                        StrokeThickness="0">
+                                        <Image
+                                            Aspect="AspectFit"
+                                            HorizontalOptions="Center"
+                                            SemanticProperties.Description="Cute dot net bot waving hi to you!"
+                                            Source="image.png"
+                                            VerticalOptions="Center" />
+                                    </Border>
+                                    <Label
+                                        Grid.Row="0"
+                                        Grid.Column="2"
+                                        Margin="10,0,0,0"
+                                        FontSize="30"
+                                        HorizontalOptions="FillAndExpand"
+                                        Text="Чат"
+                                        VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </ViewCell.View>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</ContentPage>

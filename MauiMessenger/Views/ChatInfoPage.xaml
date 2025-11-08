@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MauiMessenger.Views.ChatInfoPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:MauiMessenger.Views"
+    Title="ChatInfoPage">
+    <!--<ContentPage.Resources>
+        <local:EnumConverter x:Key="EnumConverter" />
+    </ContentPage.Resources>-->
+    
+    <Grid BackgroundColor="Transparent" RowDefinitions="60, Auto, *">
+
+        <ImageButton
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="10"
+            Aspect="AspectFill"
+            BackgroundColor="Transparent"
+            Clicked="BackButton_Clicked"
+            HorizontalOptions="Start"
+            Source="back.png"
+            VerticalOptions="Center"
+            WidthRequest="40" />
+
+        <Grid
+            Grid.Row="1"
+            Grid.Column="0"
+            Margin="10,10"
+            HorizontalOptions="Center"
+            RowDefinitions="200, Auto"
+            VerticalOptions="Center">
+
+            <Border
+                Grid.Row="0"
+                Margin="10"
+                HorizontalOptions="Center"
+                StrokeShape="RoundRectangle 100, 100, 100, 100"
+                StrokeThickness="0"
+                VerticalOptions="Center">
+                <Image
+                    Grid.Row="0"
+                    Aspect="AspectFit"
+                    HorizontalOptions="Center"
+                    Source="image.png"
+                    VerticalOptions="Start" />
+            </Border>
+            <Label
+                Grid.Row="1"
+                FontSize="30"
+                HorizontalOptions="Center"
+                Text="{Binding Chat.Name}"
+                VerticalOptions="End" />
+        </Grid>
+        <Border Grid.Row="2" StrokeShape="Rectangle">
+            <VerticalStackLayout BackgroundColor="Transparent">
+                <Label
+                    Margin="30,5"
+                    FontSize="25"
+                    Text="Участники" />
+                <CollectionView BackgroundColor="Transparent" ItemsSource="{Binding Chat.Members}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border
+                                Margin="0"
+                                HeightRequest="80"
+                                HorizontalOptions="FillAndExpand"
+                                Stroke="Red"
+                                StrokeThickness="0"
+                                VerticalOptions="Start">
+
+                                <Grid
+                                    Grid.Row="0"
+                                    Margin="0"
+                                    Padding="0"
+                                    BackgroundColor="Transparent"
+                                    ColumnDefinitions="Auto, Auto, *">
+                                    <Border
+                                        Grid.Row="0"
+                                        Grid.Column="1"
+                                        Margin="10"
+                                        HorizontalOptions="Center"
+                                        StrokeShape="RoundRectangle 80,80,80,80"
+                                        StrokeThickness="0">
+                                        <Image
+                                            Aspect="AspectFit"
+                                            HorizontalOptions="Center"
+                                            SemanticProperties.Description="Cute dot net bot waving hi to you!"
+                                            Source="image.png"
+                                            VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout
+                                        Grid.Row="0"
+                                        Grid.Column="2"
+                                        Margin="10,0,0,0"
+                                        HorizontalOptions="FillAndExpand">
+                                        <Label
+                                            FontSize="30"
+                                            Text="{Binding Username}"
+                                            VerticalOptions="Center" />
+                                        <Label
+                                            FontSize="20"
+                                            Text="{Binding Role.Name}"
+                                            VerticalOptions="End" />
+                                        <!--Text="{Binding Role, Converter={StaticResource EnumConverter}}"-->
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

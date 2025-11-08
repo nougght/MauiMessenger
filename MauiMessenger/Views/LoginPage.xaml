@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MauiMessenger.Views.LoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="LoginPage">
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsEnabled="False" IsVisible="False" />
+    </Shell.BackButtonBehavior>
+    <VerticalStackLayout VerticalOptions="Center">
+        <Label
+            Margin="10"
+            FontSize="26"
+            HorizontalOptions="Center"
+            Text="Login"
+            VerticalOptions="Center" />
+        <Entry
+            Margin="20,10"
+            FontSize="26"
+            Placeholder="Username"
+            Text="{Binding Username}"
+            VerticalOptions="Center" />
+
+        <Button
+            x:Name="SignOutButton"
+            Margin="30"
+            Clicked="SignInButton_Clicked"
+            FontSize="24"
+            HorizontalOptions="Center"
+            Text="Войти" />
+    </VerticalStackLayout>
+</ContentPage>

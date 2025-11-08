@@ -1,0 +1,498 @@
+﻿using Microsoft.AspNetCore.SignalR.Client;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Extensions;
+using MauiMessenger.ApiClient;
+using MauiMessenger.Views;
+using CommunityToolkit.Maui;
+using CommunityToolkit.Maui.Services;
+using CommunityToolkit.Maui.Views;
+
+namespace MauiMessenger.ViewModels
+{
+  public class ChatViewModel : INotifyPropertyChanged
+  {
+
+    HubConnection hubConnection;
+
+    Client apiClient { get; set; }
+
+    public UserDto User { get; set; }
+    public ChatDTO Chat { get; set; }
+
+    public Guid PrivateChatUserId(ChatDTO chat)
+    {
+      if (chat.Type.Id == PrivateTypeId)
+      {
+        return Chat.Members.First(m => m.UserId != User.UserId).UserId;
+      }
+      else
+      {
+        throw new Exception("Not private chat");
+      }
+    }
+
+    // to refactor -> add rest api request
+    public bool HasChatWithContact(Guid contactId)
+    {
+      return Chats.Any(c => c.Type.Id == PrivateTypeId && PrivateChatUserId(c) == contactId);
+    }
+
+    public Guid CurrentPrivateChatUserId
+    {
+      get
+      {
+        return PrivateChatUserId(Chat);
+
+      }
+    }
+
+    private ChatPage? _chatPage { get; set; }
+
+    private IPopupService _popupService { get; set; }
+
+    public string NewGroupName { get; set; }
+
+    public string Message { get; set; }
+
+    // список всех полученных сообщений
+    public ObservableCollection<MessageDto> Messages { get; } = new();
+    public ObservableCollection<ChatDTO> Chats { get; } = new();
+
+    public ObservableCollection<ContactDTO> Contacts { get; } = new();
+
+    public ObservableCollection<UserDto> SearchResults { get; } = new();
+    public ObservableCollection<object> SelectedGroupMembers { get; set; } = new();
+
+
+    public Dictionary<Guid, string> ChatTypes { get; private set; } = new();
+    public Dictionary<Guid, string> MemberRoles { get; private set; } = new();
+
+
+    public Guid MemberTypeId { get; private set; }
+    public Guid AdminTypeId { get; private set; }
+    public Guid OwnerTypeId { get; private set; }
+
+
+    public Guid PrivateTypeId { get; private set; }
+    public Guid GroupTypeId { get; private set; }
+
+    // команда отправки сообщений
+    public Command SendMessageCommand { get; }
+
+    public Command AddContactCommand { get; }
+    public Command ToSearchPageCommand { get; }
+    public Command ToGroupCreationPopupCommand { get; }
+    public Command BackPageCommand { get; }
+
+    public Command ChatClickedCommand { get; }
+    public Command ChatHeaderClickedCommand { get; }
+
+    public Command ContactClickedCommand { get; }
+    public Command CreatePrivateChatCommand { get; }
+    public Command CreateGroupChatCommand { get; }
+    public delegate void Notify();
+    public event Notify ClosePopupRequest;
+
+    public ChatViewModel(Client ApiClient)
+    {
+      apiClient = ApiClient;
+      // создание подключения
+      hubConnection = new HubConnectionBuilder()
+          //.WithUrl("http://10.0.2.2:8080/chat")
+          .WithUrl("http://127.0.0.1:8080/chat")
+          .Build();
+
+      _popupService = new PopupService();
+      IsConnected = false;    // по умолчанию не подключены
+      IsBusy = true;         // отправка сообщения не идет
+      Message = "";
+      //UserName = "";
+
+      SendMessageCommand = new Command(async () => await SendMessage(), () => true);
+      AddContactCommand = new Command<Guid>(async (userId) => await AddContact(userId), (userId) => true);
+      ToSearchPageCommand = new Command(ToSearchPage, () => true);
+      ToGroupCreationPopupCommand = new Command(ToGroupCreationPopup, () => true);
+      BackPageCommand = new Command(async () => await BackPage(), () => true);
+      ChatClickedCommand = new Command<Guid>(async (chatId) => await OnChatClicked(chatId), (chatId) => true);
+      ChatHeaderClickedCommand = new Command<ChatDTO>(async (chat) => await ToChatInfoPage(chat), (chat) => true);
+      ContactClickedCommand = new Command<Guid>(async (contactId) => await HasChatWithContact(contactId) ? OnChatClicked);
+      CreatePrivateChatCommand = new Command<Guid>(async (userId) => await CreatePrivateChat(userId), (userId) => true);
+      CreateGroupChatCommand = new Command(async () => await CreateGroupChat(), () => true);
+      hubConnection.Closed += async (error) =>
+      {
+        SendLocalMessage(new MessageDto { Content = "Подключение закрыто...", CreatedAt = DateTime.UtcNow });
+        IsConnected = false;
+        await Task.Delay(5000);
+        await Connect();
+      };
+
+      hubConnection.On<MessageDto>("Receive", (message) =>
+      {
+        SendLocalMessage(message);
+      });
+
+      hubConnection.On<ChatDTO>("ChatCreated", (chat) =>
+      {
+        AddLocalChat(chat);
+      });
+
+    }
+
+    public async Task LoadEnums()
+    {
+      ChatTypes = (await apiClient.ChatTypesAsync()).ToDictionary().Select(p => new KeyValuePair<Guid, string>(new Guid(p.Key), p.Value)).ToDictionary();
+      MemberRoles = (await apiClient.MemberRolesAsync()).ToDictionary().Select(p => new KeyValuePair<Guid, string>(new Guid(p.Key), p.Value)).ToDictionary();
+
+      PrivateTypeId = ChatTypes.FirstOrDefault(r => r.Value == "private").Key;
+
+      if (PrivateTypeId == Guid.Empty)
+        throw new InvalidOperationException("ChatType 'private' not found");
+
+
+      GroupTypeId = ChatTypes.FirstOrDefault(r => r.Value == "group").Key;
+
+      if (GroupTypeId == Guid.Empty)
+        throw new InvalidOperationException("ChatType 'group' not found");
+
+
+
+      OwnerTypeId = MemberRoles.FirstOrDefault(r => r.Value == "owner").Key;
+
+      if (OwnerTypeId == Guid.Empty)
+        throw new InvalidOperationException("MemberRole 'owner' not found");
+
+
+      AdminTypeId = MemberRoles.FirstOrDefault(r => r.Value == "admin").Key;
+
+      if (AdminTypeId == Guid.Empty)
+        throw new InvalidOperationException("MemberRole 'admin' not found");
+
+
+      MemberTypeId = MemberRoles.FirstOrDefault(r => r.Value == "member").Key;
+
+      if (MemberTypeId == Guid.Empty)
+        throw new InvalidOperationException("MemberRole 'member' not found");
+
+    }
+
+    public bool IsCurrentUserId(Guid userId)
+    { return userId == User.UserId; }
+
+    public bool IsIncomingMessage(object message)
+    {
+      if (message is MessageDto msg)
+      {
+        return msg.SenderId != User.UserId;
+      }
+      return false;
+    }
+    private string _searchQuery;
+    public string SearchQuery
+    {
+      get => _searchQuery;
+      set
+      {
+        if (_searchQuery != value)
+        {
+          _searchQuery = value;
+          OnPropertyChanged();
+          SearchUsersAsync(_searchQuery); // вызываем метод поиска
+        }
+      }
+    }
+
+    // идет ли отправка сообщений
+    bool isBusy;
+    public bool IsBusy
+    {
+      get => isBusy;
+      set
+      {
+        if (isBusy != value)
+        {
+          isBusy = value;
+          OnPropertyChanged("IsBusy");
+        }
+      }
+    }
+    // осуществлено ли подключение
+    bool isConnected;
+    public bool IsConnected
+    {
+      get => isConnected;
+      set
+      {
+        if (isConnected != value)
+        {
+          isConnected = value;
+          OnPropertyChanged("IsConnected");
+        }
+      }
+    }
+
+
+
+    public void ToSearchPage()
+    {
+      Shell.Current.Navigation.PushModalAsync(new SearchPage(this));
+    }
+    public void ToGroupCreationPopup()
+    {
+      _popupService.ShowPopupAsync<GroupCreationPopup>(Shell.Current);
+    }
+
+    public async Task ToChatInfoPage(ChatDTO chat)
+    {
+      await Shell.Current.Navigation.PushModalAsync(chat.Type.Name == "group" ? new ChatInfoPage(this) : new UserPage(this));
+    }
+
+    public async Task BackPage()
+    {
+      await Shell.Current.Navigation.PopModalAsync();
+    }
+
+
+    // подключение к чату
+    public async Task Connect()
+    {
+      if (IsConnected)
+        return;
+      try
+      {
+        await hubConnection.StartAsync();
+
+        IsConnected = true;
+        IsBusy = false;
+      }
+      catch (Exception ex)
+      {
+        SendLocalMessage(new MessageDto { Content = $"Ошибка подключения: {ex.Message}", CreatedAt = DateTime.UtcNow });
+      }
+    }
+
+    public async Task RegisterInHub()
+    {
+      if (!IsConnected) return;
+      try
+      {
+        await hubConnection.InvokeAsync("Register", User.UserId);
+      }
+      catch (Exception ex)
+      {
+
+      }
+    }
+    // Отключение от чата
+    public async Task Disconnect()
+    {
+      if (!IsConnected) return;
+
+      await hubConnection.StopAsync();
+      IsConnected = false;
+      SendLocalMessage(new MessageDto { Content = "Вы покинули...", CreatedAt = DateTime.UtcNow });
+
+    }
+
+    // Отправка сообщения
+    async Task SendMessage()
+    {
+      try
+      {
+        IsBusy = true;
+        var msg = new CreateMessageRequest
+        {
+          Message = this.Message,
+          ChatId = Chat.Id,
+          UserId = User.UserId
+        };
+        var response = await apiClient.MessagesPOSTAsync(msg);
+        await hubConnection.InvokeAsync("Send", response);
+      }
+      catch (Exception ex)
+      {
+        SendLocalMessage(new MessageDto { Content = $"Ошибка отправки: {ex.Message}", CreatedAt = DateTime.UtcNow });
+      }
+
+      IsBusy = false;
+    }
+
+    // Добавление сообщения
+    private void SendLocalMessage(MessageDto message)
+    {
+      try
+      {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+          Messages.Add(message);
+          if (_chatPage != null) { await _chatPage.ScrollMessagesToBottom(); }
+        });
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine("Ошибка " + ex.Message);
+      }
+    }
+
+    public async Task AddContact(Guid contactUserId)
+    {
+      try
+      {
+        IsBusy = true;
+        var contact = new CreateContactRequest
+        {
+          UserId = User.UserId,
+          ContactUserId = contactUserId,
+
+        };
+        var response = await apiClient.ContactsPOSTAsync(contact);
+
+        Contacts.Add(response);
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine("Ошибка " + ex.Message);
+      }
+      IsBusy = false;
+    }
+
+    private void AddLocalChat(ChatDTO chat)
+    {
+      try
+      {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+          if (Chats.FirstOrDefault(c => c.Id == chat.Id) == null)
+          {
+            Chats.Add(chat);
+          }
+        });
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine("Ошибка " + ex.Message);
+      }
+    }
+    public event PropertyChangedEventHandler PropertyChanged;
+    public void OnPropertyChanged(string prop = "")
+    {
+      if (PropertyChanged != null)
+        PropertyChanged(this, new PropertyChangedEventArgs(prop));
+    }
+
+    public void SetChat(Guid chatId)
+    {
+      this.Chat = this.Chats.FirstOrDefault(c => c.Id == chatId);
+    }
+
+    private async Task OnChatClicked(Guid chatId)
+    {
+      IsBusy = true;
+      SetChat(chatId);
+      var msgs = await apiClient.MessagesGETAsync(chatId);
+      Messages.Clear();
+      foreach (var msg in msgs.Messages)
+      {
+        Messages.Add(msg);
+      }
+      _chatPage = new ChatPage(this);
+      await Shell.Current.Navigation.PushModalAsync(_chatPage);
+      IsBusy = false;
+    }
+    public async Task<UserDto> Login(string username)
+    {
+      User = await apiClient.LoginAsync(username, "");
+      var userChats = (await apiClient.ChatsAsync(User.UserId)).Chats.ToList();
+      var userContacts = (await apiClient.ContactsAsync(User.UserId)).Contacts.ToList();
+
+      Chats.Clear();
+      foreach (var chat in userChats)
+      {
+        if (chat.Type.Name == "private")
+        {
+          chat.Name = chat.Members.FirstOrDefault(m => m.UserId != User.UserId)?.Username ?? "Чат";
+        }
+        Chats.Add(chat);
+      }
+      return User;
+    }
+
+    public async Task<List<MessageDto>> GetChatMessages(Guid chatId)
+    {
+      List<MessageDto> messages = (await apiClient.MessagesGETAsync(chatId)).Messages.ToList() ?? [];
+      return messages;
+    }
+
+    public async Task PostMessage(string message)
+    {
+      await apiClient.MessagesPOSTAsync(new CreateMessageRequest { ChatId = Chat.Id, Message = message, UserId = User.UserId });
+    }
+
+
+
+    private async Task SearchUsersAsync(string query)
+    {
+      if (string.IsNullOrEmpty(query))
+      {
+        SearchResults.Clear();
+      }
+      else
+      {
+        var results = (await apiClient.SearchAsync(query)).ToList();
+        SearchResults.Clear();
+        foreach (var user in results)
+          SearchResults.Add(user);
+      }
+    }
+
+    public async Task<ChatDTO> CreateGroupChat()
+    {
+
+      var members = SelectedGroupMembers.OfType<UserDto>().Select(u => new CreateMemberRequest { UserId = u.UserId, Role = MemberTypeId }).ToList();
+      members.Add(new CreateMemberRequest { UserId = User.UserId, Role = OwnerTypeId });
+      var chat = await apiClient.ChatAsync(
+
+        new CreateChatRequest
+        {
+          Name = NewGroupName,
+          Type = GroupTypeId,
+          CreatedBy = User.UserId,
+          Members = members
+        }
+      );
+
+
+
+      AddLocalChat(chat);
+      SetChat(chat.Id);
+      await hubConnection.InvokeAsync("NotifyChatCreated", chat.Id);
+      ClosePopupRequest.Invoke();
+      await Shell.Current.Navigation.PushModalAsync(new ChatPage(this));
+      return chat;
+    }
+    public async Task<ChatDTO> CreatePrivateChat(Guid userId)
+    {
+      var chat = await apiClient.ChatAsync(
+      new CreateChatRequest
+      {
+        Name = "",
+        Type = PrivateTypeId,
+        CreatedBy = User.UserId,
+        Members = new List<CreateMemberRequest>
+        {
+            new CreateMemberRequest { UserId = User.UserId, Role = MemberTypeId},
+            new CreateMemberRequest { UserId = userId, Role = MemberTypeId }
+        }
+      }
+    );
+      chat.Name = chat.Members.FirstOrDefault(m => m.UserId != User.UserId)?.Username ?? "Чат";
+      AddLocalChat(chat);
+      SetChat(chat.Id);
+      await hubConnection.InvokeAsync("NotifyChatCreated", chat.Id);
+      await Shell.Current.Navigation.PushModalAsync(new ChatPage(this));
+      return chat;
+    }
+  }
+
+}
