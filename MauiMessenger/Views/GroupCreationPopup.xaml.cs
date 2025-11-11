@@ -4,11 +4,11 @@ namespace MauiMessenger.Views;
 
 public partial class GroupCreationPopup : Popup
 {
-  ChatsTabViewModel viewModel;
-  public GroupCreationPopup(ChatsTabViewModel viewModel)
+  GroupCreationViewModel viewModel;
+  public GroupCreationPopup(GroupCreationViewModel vm)
   {
     InitializeComponent();
-    this.viewModel = viewModel;
+    this.viewModel = vm;
     BindingContext = this.viewModel;
     this.viewModel.ClosePopupRequest += () => CloseAsync();
   }

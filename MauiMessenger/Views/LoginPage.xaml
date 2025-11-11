@@ -7,6 +7,7 @@
     <Shell.BackButtonBehavior>
         <BackButtonBehavior IsEnabled="False" IsVisible="False" />
     </Shell.BackButtonBehavior>
+
     <VerticalStackLayout VerticalOptions="Center">
         <Label
             Margin="10"
@@ -22,9 +23,9 @@
             VerticalOptions="Center" />
 
         <Button
-            x:Name="SignOutButton"
+            x:Name="SignInButton"
             Margin="30"
-            Clicked="SignInButton_Clicked"
+            Command="{Binding SignInButtonClickedCommand}"
             FontSize="24"
             HorizontalOptions="Center"
             Text="Войти" />

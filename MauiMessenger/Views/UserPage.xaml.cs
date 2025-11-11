@@ -13,25 +13,24 @@ public partial class UserPage : ContentPage
   {
     InitializeComponent();
     this.viewModel = vm;
-    this.user = user;
-    BindingContext = this;
+    BindingContext = viewModel;
 
   }
 
 
-  public async void BackButton_Clicked(object sender, EventArgs e)
-  {
-    await Shell.Current.Navigation.PopModalAsync();
-  }
+  //public async void BackButton_Clicked(object sender, EventArgs e)
+  //{
+  //  await Shell.Current.Navigation.PopModalAsync();
+  //}
 
-  public async void ChatButton_Clicked(object sender, EventArgs e)
-  {
-    //await Shell.Current.Navigation.PopModalAsync();
-    await viewModel.OnChatWithUserClicked(user.UserId);
-  }
-  public async void AddToContact_Clicked(object sender, EventArgs e)
-  {
-    await viewModel.AddContact(user.UserId);
-  }
+  //public async void ChatButton_Clicked(object sender, EventArgs e)
+  //{
+  //  //await Shell.Current.Navigation.PopModalAsync();
+  //  await viewModel.OnChatWithUserClicked(user.UserId);
+  //}
+  //public async void AddToContact_Clicked(object sender, EventArgs e)
+  //{
+  //  await viewModel.AddContact(user.UserId);
+  //}
 
 }

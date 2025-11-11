@@ -4,9 +4,9 @@ namespace MauiMessenger.Views;
 
 public partial class ContactsPage : ContentPage
 {
-  ChatViewModel viewModel;
+  ContactsTabViewModel viewModel;
 
-  public ContactsPage(ChatViewModel vm)
+  public ContactsPage(ContactsTabViewModel vm)
   {
     InitializeComponent();
     this.viewModel = vm;

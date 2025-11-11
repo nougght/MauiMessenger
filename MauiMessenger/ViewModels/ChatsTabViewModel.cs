@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MauiMessenger.Views;
 
 namespace MauiMessenger.ViewModels
 {
@@ -46,19 +47,22 @@ namespace MauiMessenger.ViewModels
 
       ChatClickedCommand = new Command<Guid>(async (chatId) => await OnChatClicked(chatId), (chatId) => true);
       ToNewPrivateChatPageCommand = new Command(
-        async () => // go to search page
+        async () => await NavigationService.GoToSearchPageAsync() // go to search page
         , () => true);
       ToGroupCreationPopupCommand = new Command(
-        async () => // go to group Creation
+        async () => await _popupService.ShowPopupAsync<GroupCreationPopup>(Shell.Current)
+      // go to group Creation
         , () => true);
     }
 
     private async Task OnChatClicked(Guid chatId)
     {
       IsBusy = true;
+      var chat = _chatService.GetChat(chatId);
       await _chatService.LoadMessagesAsync(chatId);
-      // go to chat page
       IsBusy = false;
+      await NavigationService.GoToChatAsync(chat);
+      // go to chat page
 
     }
 

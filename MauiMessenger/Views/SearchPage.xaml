@@ -24,7 +24,6 @@
                 HorizontalOptions="CenterAndExpand"
                 Placeholder="Поиск пользователей"
                 Text="{Binding SearchQuery, Mode=TwoWay}"
-                TextChanged="{Binding EditorText_Changed}"
                 VerticalOptions="Center" />
         </Grid>
         <CollectionView

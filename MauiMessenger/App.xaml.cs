@@ -8,6 +8,11 @@ namespace MauiMessenger
   {
     public App(IServiceProvider services)
     {
+
+      AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+
+      TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+
       InitializeComponent();
 
       var mainVM = services.GetService<MainViewModel>();
@@ -16,9 +21,6 @@ namespace MauiMessenger
 
       // запуск страницы входа
       MainPage = new LoginPage(vm);
-
-
-      AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
 
     }

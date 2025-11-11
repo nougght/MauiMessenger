@@ -13,12 +13,58 @@ namespace MauiMessenger
       FlyoutBehavior = FlyoutBehavior.Disabled; // только TabBar
 #endif
       InitializeComponent();
+
+      Items.Add(
+        new FlyoutItem
+        {
+          Title = "Чаты",
+          Items =
+          {
+            new ShellContent
+            {
+              Content = IPlatformApplication.Current.Services.GetService<ChatsPage>()
+            }
+          },
+          Route="Chats"
+        }
+      );
+
+      Items.Add(
+        new FlyoutItem
+        {
+          Title = "Контакты",
+          Items =
+          {
+            new ShellContent
+            {
+              Content = IPlatformApplication.Current.Services.GetService<ContactsPage>()
+            }
+          },
+          Route = "Contacts"
+        }
+      );
+
+      Items.Add(
+        new FlyoutItem
+        {
+          Title = "Настройки",
+          Items =
+          {
+            new ShellContent
+            {
+              Content = IPlatformApplication.Current.Services.GetService<SettingsPage>()
+            }
+          },
+          Route = "Settings"
+        }
+      );
+
       Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
       Routing.RegisterRoute(nameof(ChatPage), typeof(ChatPage));
       Routing.RegisterRoute(nameof(ChatInfoPage), typeof(ChatInfoPage));
       Routing.RegisterRoute(nameof(UserPage), typeof(UserPage));
       Routing.RegisterRoute(nameof(SearchPage), typeof(SearchPage));
-      Routing.RegisterRoute(nameof(), typeof());
+      //Routing.RegisterRoute(nameof(), typeof());
     }
 
   }

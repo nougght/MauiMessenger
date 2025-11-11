@@ -26,13 +26,14 @@ namespace MauiMessenger.ViewModels
     public SearchViewModel(Client api)
     {
       _api = api;
-      
     }
 
-    public async Task EditorText_Changed(object sender, EventArgs e)
+    partial void OnSearchQueryChanged(string value)
     {
-      await SearchUsersAsync(SearchQuery);
+      // testing
+      _ = SearchUsersAsync(value);
     }
+
 
     private async Task SearchUsersAsync(string query)
     {

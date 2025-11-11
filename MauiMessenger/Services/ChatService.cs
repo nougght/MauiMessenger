@@ -7,7 +7,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Windows.System;
 
 
 namespace MauiMessenger.Services
@@ -21,11 +20,12 @@ namespace MauiMessenger.Services
     private readonly AppStateService _appState;
 
 
-    public ChatService(DataRepository data, Client api, SignalRService signalR)
+    public ChatService(DataRepository data, Client api, SignalRService signalR, AppStateService appState)
     {
       _data = data;
       _api = api;
       _signalR = signalR;
+      _appState = appState;
     }
 
     public async Task SendMessageAsync(Guid chatId, string text)
@@ -55,7 +55,7 @@ namespace MauiMessenger.Services
         // api request
         var response = await _api.MessagesPOSTAsync(msg);
         // replacing temporary object
-        await _data.UpdateMessage(response);
+        await _data.UpdateMessage(response, tmp.Id);
         // notifying other clients if online
         await _signalR.SendMessage(response);
 

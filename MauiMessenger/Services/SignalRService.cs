@@ -26,9 +26,8 @@ namespace MauiMessenger.Services
 
     public event Action? HubConnectionClosed;
 
-    public SignalRService(DataRepository data)
+    public SignalRService()
     {
-      _data = data;
       _hubConnection = new HubConnectionBuilder()
           //.WithUrl("http://10.0.2.2:8080/chat")
           .WithUrl("http://127.0.0.1:8080/chat")

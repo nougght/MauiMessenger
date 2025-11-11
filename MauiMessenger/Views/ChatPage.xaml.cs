@@ -35,7 +35,7 @@ public partial class ChatPage : ContentPage
 
   //public ObservableCollection<MessageDto> Messages { get => viewModel.Messages; };
   //public string Message
-  public ChatPage(ChatViewModel vm, ChatDTO chat)
+  public ChatPage(ChatViewModel vm)
   {
     InitializeComponent();
 

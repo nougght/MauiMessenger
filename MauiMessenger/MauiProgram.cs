@@ -13,11 +13,17 @@ namespace MauiMessenger
     public static MauiApp CreateMauiApp()
     {
       var builder = MauiApp.CreateBuilder();
-      builder.Services.AddTransient<GroupCreationPopup>();
       builder.Services.AddSingleton<MainViewModel>();
+
+      builder.Services.AddSingleton<ChatsTabViewModel>();
+      builder.Services.AddSingleton<ContactsTabViewModel>();
+      builder.Services.AddSingleton<SettingsTabViewModel>();
+
       builder.Services.AddSingleton<SignalRService>();
       builder.Services.AddSingleton<DataRepository>();
       builder.Services.AddSingleton<AppStateService>();
+      builder.Services.AddSingleton<AuthService>();
+      builder.Services.AddSingleton<ChatService>();
       builder.Services.AddSingleton<Client>(
         s =>
         {
@@ -38,8 +44,19 @@ namespace MauiMessenger
             fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
           });
       builder.Services.AddTransient<ChatsPage>();
+      builder.Services.AddTransient<ContactsPage>();
+      builder.Services.AddTransient<SettingsPage>();
+
+      builder.Services.AddTransient<GroupCreationPopup>();
+
+
       builder.Services.AddTransient<LoginViewModel>();
       builder.Services.AddTransient<ChatViewModel>();
+      builder.Services.AddTransient<ChatInfoViewModel>();
+      builder.Services.AddTransient<GroupCreationViewModel>();
+      builder.Services.AddTransient<SearchViewModel>();
+      builder.Services.AddTransient<UserPageViewModel>();
+
 #if DEBUG
       builder.Logging.AddDebug();
 #endif

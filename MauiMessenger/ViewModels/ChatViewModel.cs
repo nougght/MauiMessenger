@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 
 namespace MauiMessenger.ViewModels
 {
+  [QueryProperty(nameof(Chat), "Chat")]
+  //[QueryProperty(nameof(Messages), "Messages")]
   public partial class ChatViewModel : BaseViewModel
   {
 
@@ -19,7 +21,7 @@ namespace MauiMessenger.ViewModels
     private readonly ChatService _chatService;
 
     [ObservableProperty]
-    private readonly ChatDTO chat;
+    private ChatDTO chat;
 
     public ObservableCollection<MessageDTO> Messages { get; private set; }
 
@@ -31,19 +33,23 @@ namespace MauiMessenger.ViewModels
 
     public UserDTO User { get => _appState.CurrentUser;}
 
-    public ChatViewModel(SignalRService signalR, Client apiClient, ChatService chatService,  AppStateService state, ObservableCollection<MessageDTO> msgs, ChatDTO chat)
+    public ChatViewModel(SignalRService signalR, Client apiClient, ChatService chatService,
+      AppStateService state)
     {
       _signalR = signalR;
       _api = apiClient;
       _appState = state;
+      _chatService = chatService;
 
-      this.chat = chat;
-
-      Messages = msgs;
       ChatHeaderClickedCommand = new Command(async () => await OnChatHeaderClicked(chat), () => true);
       SendMessageCommand = new Command(async() => { message = ""; await _chatService.SendMessageAsync(chat.Id, this.Message); });
     }
+    
+    partial void OnChatChanged(ChatDTO value)
+    {
+      Messages = _chatService.GetMessages(chat.Id);
 
+    }
 
     private async Task OnChatHeaderClicked(ChatDTO chat)
     {

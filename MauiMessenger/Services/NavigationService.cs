@@ -1,22 +1,49 @@
-﻿using System;
+﻿using MauiMessenger.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MauiMessenger.Views;
 
 namespace MauiMessenger.Services
 {
-  public class NavigationService
+  public static class NavigationService
   {
-    public async Task GoToChatAsync(Guid chatId)
+
+    public static async Task GoToChatAsync(ChatDTO chat)
     {
-      // MAUI Shell
-      await Shell.Current.GoToAsync($"chat?chatId={chatId}");
+      var param = new ShellNavigationQueryParameters
+      {
+          { "Chat", chat },
+
+      };
+      await Shell.Current.GoToAsync(nameof(ChatPage), param);
     }
 
-    public Task GoBackAsync() => Shell.Current.GoToAsync("..");
+    public static async Task GoToUserPageAsync(UserDTO user)
+    {
+      var param = new ShellNavigationQueryParameters
+      {
+          { "User", user }
+      };
+      await Shell.Current.GoToAsync(nameof(UserPage), true, param);
+    }
 
-    public Task GoToLoginAsync() => Shell.Current.GoToAsync("//login");
+    public static async Task GoToSearchPageAsync()
+    {
+      await Shell.Current.GoToAsync(nameof(SearchPage));
+    }
+
+    public static async Task GoBackAsync() => await Shell.Current.GoToAsync("..");
+
+    //public static async Task GoToLoginAsync()
+    //{
+    //  Application.Current.MainPage = new LoginPage();
+    //}
+
+    
+    //Shell.Current.GoToAsync("//login");
   }
 
 }

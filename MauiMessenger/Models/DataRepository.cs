@@ -8,7 +8,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Windows.System;
 
 namespace MauiMessenger.Models
 {
@@ -24,6 +23,29 @@ namespace MauiMessenger.Models
     public ObservableCollection<ContactDTO> Contacts { get; } = new();
 
 
+    public async Task<UserDTO> GetUserById(Guid? userId)
+    {
+
+      var existing = Users.FirstOrDefault(u => u.UserId == userId);
+      if (existing == null)
+      {
+        UserDTO response = await _api.UserAsync(userId);
+        UpdateCollection(Users, Enumerable.Repeat(response, 1), (a, b) => a.UserId == b.UserId);
+        return response;
+      }
+      return existing;
+    }
+
+    //public async Task<UserDTO?> GetUserByUsername(string username)
+    //{
+    //  var existing = Users.FirstOrDefault(u => u.Username == username);
+    //  if (existing != null)
+    //  {
+    //    return existing;
+    //  }
+    //  else {
+    //    var response = await _api.UserAsync()
+    //}
     public ContactDTO? GetContactByUser(Guid userId)
     {
       return Contacts.FirstOrDefault(c => c.UserId == userId);
@@ -150,9 +172,9 @@ namespace MauiMessenger.Models
 
         foreach (var chat in userChats)
         {
-          if (chat.Type.Name == "private")
+          if (chat.Type.Id == PrivateTypeId)
           {
-            chat.Name = chat.Members.FirstOrDefault(m => m.UserId != User.UserId)?.Username ?? "Чат";
+            chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
           }
           Chats.Add(chat);
         }
@@ -163,6 +185,26 @@ namespace MauiMessenger.Models
 
       }
     }
+
+    public async Task LoadContactsAsync()
+    {
+      if (_appState.CurrentUser != null)
+      {
+        var userContacts = (await _api.ContactsAsync(_appState.CurrentUser.UserId)).Contacts;
+        Contacts.Clear();
+
+        foreach (var contact in  userContacts)
+        {
+          Contacts.Add(contact);
+        }
+      }
+      else
+      {
+        await Application.Current.MainPage.DisplayAlert("Внимание", "LoadContactsAsync - CurrentUser == null", "OK");
+
+      }
+    }
+
 
     public async Task AddChat(ChatDTO chat)
     {
@@ -197,13 +239,13 @@ namespace MauiMessenger.Models
       }
       }
 
-    public async Task UpdateMessage(MessageDTO updated)
+    public async Task UpdateMessage(MessageDTO updated, Guid oldId)
     {
       var chat = GetChat(updated.ChatId);
       if (chat != null)
       {
         var messages = GetMessages(updated.ChatId);
-        var existing = messages.FirstOrDefault(m => m.Id == chat.Id);
+        var existing = messages.FirstOrDefault(m => m.Id == oldId);
         if (existing != null)
         {
           var index = messages.IndexOf(existing);

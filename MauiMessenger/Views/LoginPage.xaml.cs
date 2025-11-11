@@ -27,11 +27,11 @@ public partial class LoginPage : ContentPage
 
   protected override bool OnBackButtonPressed() { return true; }
 
-  private async void SignInButton_Clicked(object sender, EventArgs e)
-  {
-    Application.Current.MainPage = new AppShell();
-    await viewModel.Login(Username);
-    await viewModel.Connect();
-    await viewModel.RegisterInHub();
-  }
+  //private async void SignInButton_Clicked(object sender, EventArgs e)
+  //{
+  //  Application.Current.MainPage = new AppShell();
+  //  await viewModel.Login(Username);
+  //  await viewModel.Connect();
+  //  await viewModel.RegisterInHub();
+  //}
 }

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace MauiMessenger.ViewModels
 {
-  public partial class  ContactsTabViewModel : BaseViewModel
+  public partial class ContactsTabViewModel : BaseViewModel
   {
     private readonly ChatService _chatService;
 
@@ -21,13 +21,14 @@ namespace MauiMessenger.ViewModels
     {
       _chatService = chatService;
       Contacts = chatService.GetContacts();
-      ContactClickedCommand = new Command<Guid> (async (userId) => 
+      ContactClickedCommand = new Command<Guid>(async (userId) => await OnContactClicked(userId));
     }
 
 
-    public async Task OnContactClicked(Guid userid)
+    public async Task OnContactClicked(Guid userId)
     {
-      await _chatService.GetOrCreateChatAsync(userid);
+      var chat = await _chatService.GetOrCreateChatAsync(userId);
+      await NavigationService.GoToChatAsync(chat);
       // go to chat page
     }
 

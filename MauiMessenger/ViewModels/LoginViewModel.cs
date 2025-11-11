@@ -18,7 +18,8 @@ namespace MauiMessenger.ViewModels
     private readonly AuthService _authService;
 
 
-    public Command SignInButtonClickedCommand;
+    public Command SignInButtonClickedCommand { get; }
+    public Command BackButtonClickedCommand { get; }
 
 
     [ObservableProperty]
@@ -30,8 +31,9 @@ namespace MauiMessenger.ViewModels
       _appState = appState;
       _authService = authService;
 
-      SignInButtonClickedCommand = new Command(async () => await _authService.TrySignIn(this.Username));
+      SignInButtonClickedCommand = new Command(async () => await OnSignInClicked(), () => true);
 
+      BackButtonClickedCommand = new Command(async () => await NavigationService.GoBackAsync());
     }
 
     // initialization data before login
@@ -45,7 +47,12 @@ namespace MauiMessenger.ViewModels
 
     }
 
-    
+
+    public async Task OnSignInClicked()
+    {
+      await _authService.TrySignIn(this.Username);
+      Application.Current.MainPage = new AppShell();
+    }
 
 
   }

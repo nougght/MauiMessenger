@@ -6,18 +6,18 @@
     xmlns:local="clr-namespace:MauiMessenger.Views"
     Title="MauiMessenger">
 
-    <FlyoutItem Title="Чаты">
-        <ShellContent ContentTemplate="{DataTemplate local:ChatsPage}" Route="chats" />
+    <!--<FlyoutItem Title="Чаты" >
+        <ShellContent ContentTemplate="{DataTemplate local:ChatsPage}" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Контакты">
-        <ShellContent ContentTemplate="{DataTemplate local:ContactsPage}" Route="contacts" />
+    <FlyoutItem Title="Контакты" >
+        <ShellContent ContentTemplate="{DataTemplate local:ContactsPage}" />
     </FlyoutItem>
 
-    <FlyoutItem Title="Настройки">
-        <ShellContent ContentTemplate="{DataTemplate local:SettingsPage}" Route="settings" />
-    </FlyoutItem>
-    
+    <FlyoutItem Title="Настройки" >
+        <ShellContent ContentTemplate="{DataTemplate local:SettingsPage}" />
+    </FlyoutItem>-->
+
     <!--<TabBar>
         <ShellContent Title="Чаты" ContentTemplate="{DataTemplate local:ChatsPage}" />
         <ShellContent Title="Настройки" ContentTemplate="{DataTemplate local:SettingsPage}" />

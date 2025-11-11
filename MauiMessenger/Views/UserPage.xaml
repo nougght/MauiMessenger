@@ -13,7 +13,7 @@
             Margin="10"
             Aspect="AspectFill"
             BackgroundColor="Transparent"
-            Clicked="BackButton_Clicked"
+            Command="{Binding BackButtonClickedCommand}"
             HorizontalOptions="Start"
             Source="back.png"
             VerticalOptions="Center"

@@ -17,11 +17,16 @@ namespace MauiMessenger.ViewModels
     private readonly ChatService _chatService;
 
     [ObservableProperty]
-    private string _groupName;
+    private string groupName;
 
 
     [ObservableProperty]
     private string searchQuery;
+
+
+    public delegate void Notify();
+
+    public event Notify ClosePopupRequest;
 
 
 
@@ -37,13 +42,14 @@ namespace MauiMessenger.ViewModels
       _api = api;
       _chatService = chatService;
 
-      CreateGroupChatCommand = new Command(async () => await _chatService.CreateGroupChat(SelectedGroupMembers.OfType<UserDTO>(), GroupName), () => true);
+      CreateGroupChatCommand = new Command(async () => await OnCreateGroupChat(), () => true);
+
     }
 
 
-    public async Task EditorText_Changed(object sender, EventArgs e)
+    public void OnSearchQueryChanged(object sender, EventArgs e)
     {
-      await SearchUsersAsync(SearchQuery);
+      _ = SearchUsersAsync(SearchQuery);
     }
     private async Task SearchUsersAsync(string query)
     {
@@ -59,6 +65,14 @@ namespace MauiMessenger.ViewModels
           SearchResults.Add(user);
       }
     }
-  }
 
+    public async Task OnCreateGroupChat()
+    {
+      ClosePopupRequest?.Invoke();
+      var chat = await _chatService.CreateGroupChat(SelectedGroupMembers.OfType<UserDTO>(), GroupName);
+      await NavigationService.GoToChatAsync(chat);
+    }
+  }
 }
+
+

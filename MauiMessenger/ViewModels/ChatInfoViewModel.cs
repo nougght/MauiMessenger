@@ -22,6 +22,7 @@ namespace MauiMessenger.ViewModels
 
 
     public Command ChatMemberClickedCommand { get; }
+    public Command BackButtonClickedCommand { get; }
 
 
     public ChatInfoViewModel(ChatService chatService, DataRepository data, AppStateService appState, Client api, ChatDTO chat)
@@ -32,11 +33,11 @@ namespace MauiMessenger.ViewModels
       _api = api;
       this.Chat = chat;
 
-      ChatMemberClickedCommand = new Command<Guid>(async (userId) => await
-      // go to user page
-      , (userId) => true);
-
+      ChatMemberClickedCommand = new Command<Guid>(async (userId) =>
+        await NavigationService.GoToUserPageAsync(await _data.GetUserById(userId)), (userId) => true);
+      BackButtonClickedCommand = new Command(async () => await NavigationService.GoBackAsync());
 
     }
 
   }
+}
