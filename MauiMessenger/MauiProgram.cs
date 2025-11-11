@@ -1,9 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using MauiMessenger.ViewModels;
 using MauiMessenger.Views;
-using MauiMessenger.ApiClient;
+using MauiMessenger.Services;
 using Microsoft.Extensions.Configuration;
 using CommunityToolkit.Maui;
+using MauiMessenger.Models;
 
 namespace MauiMessenger
 {
@@ -13,7 +14,10 @@ namespace MauiMessenger
     {
       var builder = MauiApp.CreateBuilder();
       builder.Services.AddTransient<GroupCreationPopup>();
-      builder.Services.AddSingleton<ChatViewModel>();
+      builder.Services.AddSingleton<MainViewModel>();
+      builder.Services.AddSingleton<SignalRService>();
+      builder.Services.AddSingleton<DataRepository>();
+      builder.Services.AddSingleton<AppStateService>();
       builder.Services.AddSingleton<Client>(
         s =>
         {
@@ -34,6 +38,8 @@ namespace MauiMessenger
             fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
           });
       builder.Services.AddTransient<ChatsPage>();
+      builder.Services.AddTransient<LoginViewModel>();
+      builder.Services.AddTransient<ChatViewModel>();
 #if DEBUG
       builder.Logging.AddDebug();
 #endif

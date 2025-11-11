@@ -4,8 +4,8 @@ namespace MauiMessenger.Views;
 
 public partial class GroupCreationPopup : Popup
 {
-  ChatViewModel viewModel;
-  public GroupCreationPopup(ChatViewModel viewModel)
+  ChatsTabViewModel viewModel;
+  public GroupCreationPopup(ChatsTabViewModel viewModel)
   {
     InitializeComponent();
     this.viewModel = viewModel;

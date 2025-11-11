@@ -14,7 +14,11 @@ namespace MauiMessenger
 #endif
       InitializeComponent();
       Routing.RegisterRoute(nameof(LoginPage), typeof(LoginPage));
-
+      Routing.RegisterRoute(nameof(ChatPage), typeof(ChatPage));
+      Routing.RegisterRoute(nameof(ChatInfoPage), typeof(ChatInfoPage));
+      Routing.RegisterRoute(nameof(UserPage), typeof(UserPage));
+      Routing.RegisterRoute(nameof(SearchPage), typeof(SearchPage));
+      Routing.RegisterRoute(nameof(), typeof());
     }
 
   }

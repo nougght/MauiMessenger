@@ -5,23 +5,24 @@ namespace MauiMessenger.Views;
 public partial class LoginPage : ContentPage
 {
   public IEnumerable<string> IdTokenClaims { get; set; } = new string[] { "No claims found in ID token" };
-  ChatViewModel viewModel;
-  public string Username { get; set; }
-  public LoginPage(ChatViewModel vm)
+  LoginViewModel viewModel;
+
+  public LoginPage(LoginViewModel vm)
   {
     InitializeComponent();
     viewModel = vm;
-    BindingContext = this;
+    BindingContext = viewModel;
   }
 
   protected override async void OnAppearing()
   {
     base.OnAppearing();
-    if (viewModel.ChatTypes.Count == 0)
-    {
-      await viewModel.LoadEnums();
+    //if (viewModel.ChatTypes.Count == 0)
+    //{
+    //  await viewModel.LoadEnums();
 
-    }
+    //}
+    await viewModel.Init();
   }
 
   protected override bool OnBackButtonPressed() { return true; }

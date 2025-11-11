@@ -1,3 +1,4 @@
+using MauiMessenger.Services;
 using MauiMessenger.ViewModels;
 
 namespace MauiMessenger.Views;
@@ -5,13 +6,15 @@ namespace MauiMessenger.Views;
 public partial class ChatInfoPage : ContentPage
 {
   ChatViewModel viewModel;
-  public Command ChatClickedCommand { get; set; }
-  public ChatInfoPage(ChatViewModel vm)
+  ChatDTO chat;
+  public Command ChatMemberClickedCommand { get; set; }
+  public ChatInfoPage(ChatViewModel vm, ChatDTO chat)
   {
     InitializeComponent();
     this.viewModel = vm;
-    BindingContext = viewModel;
-
+    this.chat = chat;
+    BindingContext = this;
+    ChatMemberClickedCommand = new Command<Guid>(async (userId) => await viewModel.ToUserPage(userId), (userId) => true);
   }
   public async void BackButton_Clicked(object sender, EventArgs e)
   {

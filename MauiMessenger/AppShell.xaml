@@ -7,17 +7,17 @@
     Title="MauiMessenger">
 
     <FlyoutItem Title="Чаты">
-        <ShellContent ContentTemplate="{DataTemplate local:ChatsPage}" />
+        <ShellContent ContentTemplate="{DataTemplate local:ChatsPage}" Route="chats" />
     </FlyoutItem>
 
     <FlyoutItem Title="Контакты">
-        <ShellContent ContentTemplate="{DataTemplate local:ContactsPage}" />
+        <ShellContent ContentTemplate="{DataTemplate local:ContactsPage}" Route="contacts" />
     </FlyoutItem>
 
     <FlyoutItem Title="Настройки">
-        <ShellContent ContentTemplate="{DataTemplate local:SettingsPage}" />
+        <ShellContent ContentTemplate="{DataTemplate local:SettingsPage}" Route="settings" />
     </FlyoutItem>
-
+    
     <!--<TabBar>
         <ShellContent Title="Чаты" ContentTemplate="{DataTemplate local:ChatsPage}" />
         <ShellContent Title="Настройки" ContentTemplate="{DataTemplate local:SettingsPage}" />

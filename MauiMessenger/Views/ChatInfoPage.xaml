@@ -8,7 +8,7 @@
     <!--<ContentPage.Resources>
         <local:EnumConverter x:Key="EnumConverter" />
     </ContentPage.Resources>-->
-    
+
     <Grid BackgroundColor="Transparent" RowDefinitions="60, Auto, *">
 
         <ImageButton
@@ -69,6 +69,10 @@
                                 StrokeThickness="0"
                                 VerticalOptions="Start">
 
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ChatMemberClickedCommand}" CommandParameter="{Binding UserId}" />
+                                </Border.GestureRecognizers>
+
                                 <Grid
                                     Grid.Row="0"
                                     Margin="0"
@@ -102,7 +106,7 @@
                                             FontSize="20"
                                             Text="{Binding Role.Name}"
                                             VerticalOptions="End" />
-                                        <!--Text="{Binding Role, Converter={StaticResource EnumConverter}}"-->
+                                        <!--  Text="{Binding Role, Converter={StaticResource EnumConverter}}"  -->
                                     </VerticalStackLayout>
                                 </Grid>
                             </Border>

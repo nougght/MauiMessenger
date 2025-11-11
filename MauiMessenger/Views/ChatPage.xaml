@@ -75,7 +75,7 @@
         <Border StrokeThickness="0">
 
             <Border.GestureRecognizers>
-                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ChatHeaderClickedCommand}" CommandParameter="{Binding Chat}" />
+                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ChatHeaderClickedCommand}" />
             </Border.GestureRecognizers>
 
             <Grid
@@ -144,6 +144,7 @@
                 HorizontalOptions="FillAndExpand"
                 Placeholder="Message"
                 Text="{Binding Message}" />
+            <!--  TextChanged="{Binding EditorText_Changed}"  -->
             <ImageButton
                 Grid.Column="1"
                 Margin="10"

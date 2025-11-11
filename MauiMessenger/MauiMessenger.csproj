@@ -76,6 +76,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Maui" Version="12.2.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.9" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.110" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="$(MauiVersion)" />
@@ -114,13 +115,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Update="Views\GroupCreationPopup.xaml.cs">
       <DependentUpon>GroupCreationPopup.xaml</DependentUpon>
     </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="NswagConfig\Services\" />
   </ItemGroup>
 
 </Project>

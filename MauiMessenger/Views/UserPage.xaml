@@ -45,7 +45,7 @@
                 Grid.Row="1"
                 FontSize="30"
                 HorizontalOptions="Center"
-                Text="{Binding Chat.Name}"
+                Text="{Binding User.Name}"
                 VerticalOptions="End" />
         </Grid>
 
@@ -67,11 +67,15 @@
                     Margin="30"
                     Aspect="AspectFit"
                     BackgroundColor="Transparent"
-                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AddContactCommand}"
-                    CommandParameter="{Binding PrivateChatUserId}"
+                    Command="{Binding AddToContactCommand}"
                     HorizontalOptions="Center"
                     Source="add_user.png"
                     VerticalOptions="Center" />
+                <!--  Clicked="AddToContact_Clicked"  -->
+                <!--
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AddContactCommand}"
+                    CommandParameter="{Binding PrivateChatUserId}"
+                -->
             </Border>
 
             <Border
@@ -85,10 +89,11 @@
                     Margin="30"
                     Aspect="AspectFit"
                     BackgroundColor="Transparent"
-                    Clicked="ChatButton_Clicked"
+                    Command="{Binding ChatWithUserCommand}"
                     HorizontalOptions="Center"
                     Source="chat_bubble.png"
                     VerticalOptions="Center" />
+                <!--  Clicked="ChatButton_Clicked"  -->
             </Border>
 
         </Grid>

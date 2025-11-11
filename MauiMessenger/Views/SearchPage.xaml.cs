@@ -4,8 +4,8 @@ namespace MauiMessenger.Views;
 
 public partial class SearchPage : ContentPage
 {
-  ChatViewModel viewModel;
-  public SearchPage(ChatViewModel vm)
+  SearchViewModel viewModel;
+  public SearchPage(SearchViewModel vm)
   {
     InitializeComponent();
     this.viewModel = vm;
