@@ -1,7 +1,9 @@
+using MauiMessenger.Models;
 using MauiMessenger.Services;
 using MauiMessenger.ViewModels;
 using System.Collections.ObjectModel;
-using MauiMessenger.Models;
+using System.Collections.Specialized;
+using System.Diagnostics;
 
 namespace MauiMessenger.Views;
 
@@ -23,7 +25,8 @@ public class MessageTemplateSelector : DataTemplateSelector
     }
     return IncomingTemplate;
 
-  }}
+  }
+}
 
 
 
@@ -31,7 +34,6 @@ public partial class ChatPage : ContentPage
 {
 
   public ChatViewModel viewModel;
-  public ChatDTO chat;
 
   //public ObservableCollection<MessageDto> Messages { get => viewModel.Messages; };
   //public string Message
@@ -40,10 +42,44 @@ public partial class ChatPage : ContentPage
     InitializeComponent();
 
     this.viewModel = vm;
-    this.chat = chat;
     BindingContext = viewModel;
-    MessageTemplateSelector.CurrentUserId = vm.User.UserId;
+    viewModel.MessageSent += () => 
+      { ScrollMessagesToBottom(viewModel, EventArgs.Empty); };
 
+    MessageTemplateSelector.CurrentUserId = vm.User.UserId;
+    //vm.MessageSent += ScrollMessagesToBottom;
+#if DEBUG
+    Debug.WriteLine($"[ChatPage] BindingContext = {BindingContext?.GetType().Name}");
+    Debug.WriteLine($"[ChatPage] Messages = {viewModel.Messages?.Count}");
+#endif
+  }
+
+  protected override async void OnAppearing()
+  {
+    base.OnAppearing();
+    //this.viewModel.OnAppearing();
+    //await Task.Delay(1000);
+    //if (viewModel.Messages.Count > 0)
+    //{
+    //  ScrollMessagesToBottom();
+    //}
+
+  }
+
+  void OnScrolled(object sender, ItemsViewScrolledEventArgs e)
+  {
+    var firstVisivle = e.FirstVisibleItemIndex;
+    var lastVisible = e.LastVisibleItemIndex;
+
+    viewModel.OnVisibleRangeChanged(firstVisivle, lastVisible);
+  }
+  private async void ScrollMessagesToBottom(object sender, EventArgs e)
+  {
+    if (MessagesView.ItemsSource is ObservableCollection<MessageDTO> items && items.Count > 0)
+    {
+      var last = items[items.Count - 1];
+      MessagesView.ScrollTo(last, position: ScrollToPosition.MakeVisible, animate: false);
+    }
   }
 
   public async void BackButton_Clicked(object sender, EventArgs e)
@@ -51,18 +87,23 @@ public partial class ChatPage : ContentPage
 
     await Shell.Current.Navigation.PopModalAsync();
   }
-  public async void MessagesView_Loaded(object sender, EventArgs e)
-  {
-    await ScrollMessagesToBottom();
-  }
 
-  public async Task ScrollMessagesToBottom()
+  private void MessagesView_Scrolled(object sender, ItemsViewScrolledEventArgs e)
   {
-    if (MessagesView.ItemsSource is IList<MessageDTO> items && items.Count > 0)
-    {
-      var last = items[items.Count - 1];
-      MessagesView.ScrollTo(last, position: ScrollToPosition.End, animate: true);
-    }
+
   }
+  //public async void MessagesView_Loaded(object sender, EventArgs e)
+  //{
+  //  await ScrollMessagesToBottom();
+  //}
+
+  //public async Task ScrollMessagesToBottom()
+  //{
+  //  if (MessagesView.ItemsSource is ObservableCollection<MessageDTO> items && items.Count > 0)
+  //  {
+  //    var last = items[items.Count - 1];
+  //    MessagesView.ScrollTo(last, position: ScrollToPosition.End, animate: true);
+  //  }
+  //}
 
 }

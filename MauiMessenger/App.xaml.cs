@@ -25,6 +25,13 @@ namespace MauiMessenger
 
     }
 
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+      var window = base.CreateWindow(activationState);
+      window.Width = 500;
+      window.Height = 700;
+      return window;
+    }
     private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
       var ex = e.ExceptionObject as Exception;
@@ -38,12 +45,12 @@ namespace MauiMessenger
 
     private void ShowError(Exception ex)
     {
-    #if DEBUG
+    //#if DEBUG
       MainThread.BeginInvokeOnMainThread(async () =>
       await Application.Current.MainPage.DisplayAlert("Ошибка", ex.ToString(), "OK"));
-    #else
-    // В релизе — логируем
-    #endif
+    //#else
+    //// В релизе — логируем
+    //#endif
     }
   }
 

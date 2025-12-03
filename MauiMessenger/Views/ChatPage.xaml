@@ -26,14 +26,21 @@
                     StrokeShape="RoundRectangle 20"
                     StrokeThickness="1">
 
-                    <Label
-                        FontSize="24"
-                        HorizontalOptions="Start"
-                        HorizontalTextAlignment="Center"
-                        LineBreakMode="WordWrap"
-                        Text="{Binding Content}"
-                        VerticalOptions="Start"
-                        VerticalTextAlignment="Center" />
+                    <HorizontalStackLayout>
+                        <Label
+                            FontSize="24"
+                            HorizontalOptions="Start"
+                            HorizontalTextAlignment="Center"
+                            LineBreakMode="WordWrap"
+                            Text="{Binding Content}"
+                            VerticalOptions="Start"
+                            VerticalTextAlignment="Center" />
+                        <Label
+                            FontSize="16"
+                            HorizontalOptions="End"
+                            Text="{Binding UpdatedAt, StringFormat='{0:HH:mm}'}"
+                            VerticalOptions="End" />
+                    </HorizontalStackLayout>
                 </Border>
             </Grid>
         </DataTemplate>
@@ -49,14 +56,21 @@
                     StrokeShape="RoundRectangle 20"
                     StrokeThickness="1">
 
-                    <Label
-                        FontSize="24"
-                        HorizontalOptions="Start"
-                        HorizontalTextAlignment="Center"
-                        LineBreakMode="WordWrap"
-                        Text="{Binding Content}"
-                        VerticalOptions="Start"
-                        VerticalTextAlignment="Center" />
+                    <HorizontalStackLayout>
+                        <Label
+                            FontSize="24"
+                            HorizontalOptions="Start"
+                            HorizontalTextAlignment="Center"
+                            LineBreakMode="WordWrap"
+                            Text="{Binding Content}"
+                            VerticalOptions="Start"
+                            VerticalTextAlignment="Center" />
+                        <Label
+                            FontSize="16"
+                            HorizontalOptions="End"
+                            Text="{Binding UpdatedAt, StringFormat='{0:HH:mm}'}"
+                            VerticalOptions="End" />
+                    </HorizontalStackLayout>
                 </Border>
             </Grid>
         </DataTemplate>
@@ -127,8 +141,10 @@
             HorizontalOptions="FillAndExpand"
             ItemTemplate="{StaticResource MessageSelector}"
             ItemsSource="{Binding Messages}"
-            Loaded="MessagesView_Loaded"
+            Loaded="ScrollMessagesToBottom"
+            Scrolled="OnScrolled"
             VerticalScrollBarVisibility="Always">
+
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout ItemSpacing="5" Orientation="Vertical" />
             </CollectionView.ItemsLayout>

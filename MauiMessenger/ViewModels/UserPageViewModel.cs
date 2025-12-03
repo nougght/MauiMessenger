@@ -32,7 +32,7 @@ namespace MauiMessenger.ViewModels
     public Command ChatWithUserCommand { get; }
 
     public Command BackButtonClickedCommand { get; }
-    public UserPageViewModel(ChatService chatService, DataRepository data, AppStateService appState, Client api, UserDTO user)
+    public UserPageViewModel(ChatService chatService, DataRepository data, AppStateService appState, Client api)
     {
       _chatService = chatService;
       _data = data;
@@ -53,13 +53,17 @@ namespace MauiMessenger.ViewModels
     public async Task AddToContact()
     {
       IsBusy = true;
-      CreateContactRequest contact = new()
+
+      if (_data.GetContactByUser(User.UserId) == null)
       {
-        UserId = _appState.CurrentUser.UserId,
-        ContactUserId = this.User.UserId
-      };
-      var response = await _api.ContactsPOSTAsync(contact);
-      await _data.AddContact(response);
+        CreateContactRequest contact = new()
+        {
+          UserId = _appState.CurrentUser.UserId,
+          ContactUserId = this.User.UserId
+        };
+        var response = await _api.ContactsPOSTAsync(contact);
+        await MainThread.InvokeOnMainThreadAsync(async () => await _data.AddContact(response));
+      }
       IsBusy = false;
     }
 
@@ -67,8 +71,10 @@ namespace MauiMessenger.ViewModels
     public async Task ChatWithUser()
     {
       var chat = await _chatService.GetOrCreateChatAsync(User.UserId);
+      await _chatService.LoadMessagesAsync(chat.Id);
+
       // go to chat page
-      await NavigationService.GoToChatAsync(chat);
+      await NavigationService.GoToChatAsync(chat, await _chatService.GetMessages(chat.Id));
     }
 
   }

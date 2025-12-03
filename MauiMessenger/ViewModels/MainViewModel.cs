@@ -28,12 +28,24 @@ namespace MauiMessenger.ViewModels
 
 
       // trying without mainthread invoke
-      _signalR.OnChatCreated += async chat =>  await _data.AddChat(chat);
-      _signalR.OnMessageReceived += async message => await _data.AddMessage(message);
+      _signalR.OnChatCreated += async chat =>
+      {
+        if (chat.Type.Id == _data.PrivateTypeId)
+        {
+          chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
+        }
+        await _data.AddChat(chat);
 
+      };
+      _signalR.OnMessageReceived += async message =>
+      {
+        if (message.SenderId != _appState.CurrentUser.UserId)
+        {
+          
+          await _data.AddMessage(message);
+          await _data.UpdateChatAsync(message.ChatId);
+        }
+      };
     }
-
-
-
   }
 }

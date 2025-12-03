@@ -14,7 +14,7 @@
                 FontSize="22"
                 HorizontalTextAlignment="Center"
                 Text="Название группы" />
-            <Entry Placeholder="Введите название" Text="{Binding NewGroupName}" />
+            <Entry Placeholder="Введите название" Text="{Binding GroupName}" />
         </VerticalStackLayout>
 
         <Frame Grid.Row="1">

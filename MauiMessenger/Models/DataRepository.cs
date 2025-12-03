@@ -75,12 +75,19 @@ namespace MauiMessenger.Models
 
     public ChatDTO? GetChat(Guid id) => Chats.FirstOrDefault(c => c.Id == id);
 
-    public ObservableCollection<MessageDTO> GetMessages(Guid chatId)
+    public async Task<ObservableCollection<MessageDTO>> GetMessages(Guid chatId)
     {
-      if (!_messagesByChat.TryGetValue(chatId, out var messages))
+      ObservableCollection<MessageDTO>? messages;
+
+      _messagesByChat.TryGetValue(chatId, out messages);
+      if (messages == null)
       {
-        messages = new ObservableCollection<MessageDTO>();
-        _messagesByChat[chatId] = messages;
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+          {
+            messages = new ObservableCollection<MessageDTO>();
+            _messagesByChat[chatId] = messages;
+          }
+        );
       }
       return messages;
     }
@@ -186,6 +193,24 @@ namespace MauiMessenger.Models
       }
     }
 
+    public async Task<ChatDTO> UpdateChatAsync(Guid chatId)
+    {
+      var existing = GetChat(chatId);
+      var ind = Chats.IndexOf(existing);
+
+      var updated = await _api.ChatGETAsync(chatId, _appState.CurrentUser.UserId);
+      updated.Name = existing.Name;
+      await MainThread.InvokeOnMainThreadAsync(() => Chats[ind] = updated);
+      
+      //existing.Name = updated.Name;
+      //existing.LastMessage = updated.LastMessage;
+      //existing.Members = updated.Members;
+      //existing.UpdatedAt = updated.UpdatedAt;
+      //existing.UnreadMessagesCount = updated.UnreadMessagesCount;
+
+      return updated;
+    }
+
     public async Task LoadContactsAsync()
     {
       if (_appState.CurrentUser != null)
@@ -193,7 +218,7 @@ namespace MauiMessenger.Models
         var userContacts = (await _api.ContactsAsync(_appState.CurrentUser.UserId)).Contacts;
         Contacts.Clear();
 
-        foreach (var contact in  userContacts)
+        foreach (var contact in userContacts)
         {
           Contacts.Add(contact);
         }
@@ -210,7 +235,7 @@ namespace MauiMessenger.Models
     {
       if (GetChat(chat.Id) == null)
       {
-        Chats.Add(chat);
+        await MainThread.InvokeOnMainThreadAsync(() => Chats.Add(chat));
       }
 
     }
@@ -219,7 +244,7 @@ namespace MauiMessenger.Models
     {
       var messages = (await _api.MessagesGETAsync(chatId)).Messages;
 
-      var collection = GetMessages(chatId);
+      var collection = await GetMessages(chatId);
 
       UpdateCollection(collection, messages, (a, b) => a.Id == b.Id && a.UpdatedAt == b.UpdatedAt);
 
@@ -231,25 +256,41 @@ namespace MauiMessenger.Models
       var chat = GetChat(message.ChatId);
       if (chat != null)
       {
-        GetMessages(message.ChatId).Add(message);
+        
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+          {
+            var msgs = (await GetMessages(message.ChatId));
+            if (msgs != null)
+            {
+              msgs.Add(message);
+            }
+            else
+            {
+              await LoadMessagesAsync(chat.Id);
+            }
+          }
+        );
       }
       else
       {
         await Application.Current.MainPage.DisplayAlert("Внимание", "AddMessage - чат не найден", "OK");
       }
-      }
+    }
 
     public async Task UpdateMessage(MessageDTO updated, Guid oldId)
     {
       var chat = GetChat(updated.ChatId);
       if (chat != null)
       {
-        var messages = GetMessages(updated.ChatId);
+        var messages = await GetMessages(updated.ChatId);
         var existing = messages.FirstOrDefault(m => m.Id == oldId);
         if (existing != null)
         {
           var index = messages.IndexOf(existing);
-          messages[index] = updated;
+          MainThread.BeginInvokeOnMainThread(async () =>
+          {
+            messages[index] = updated;
+          });
           // event messages changed
         }
         else
@@ -264,7 +305,7 @@ namespace MauiMessenger.Models
 
     public async Task AddContact(ContactDTO contact)
     {
-      if (GetContactByUser(contact.UserId) != null)
+      if (GetContactByUser(contact.UserId) == null)
       {
         Contacts.Add(contact);
       }

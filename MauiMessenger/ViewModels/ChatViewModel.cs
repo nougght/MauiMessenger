@@ -12,18 +12,18 @@ namespace MauiMessenger.ViewModels
 {
   [QueryProperty(nameof(Chat), "Chat")]
   //[QueryProperty(nameof(Messages), "Messages")]
-  public partial class ChatViewModel : BaseViewModel
+  public partial class ChatViewModel : BaseViewModel, IQueryAttributable
   {
 
     private readonly SignalRService _signalR;
-    private readonly Client _api;
+    private readonly DataRepository _data;
     private readonly AppStateService _appState;
     private readonly ChatService _chatService;
 
     [ObservableProperty]
     private ChatDTO chat;
 
-    public ObservableCollection<MessageDTO> Messages { get; private set; }
+    public ObservableCollection<MessageDTO> Messages { get; set; } = new();
 
     [ObservableProperty]
     private string message;
@@ -33,33 +33,78 @@ namespace MauiMessenger.ViewModels
 
     public UserDTO User { get => _appState.CurrentUser;}
 
+
+    public event Action MessageSent; 
+
+
     public ChatViewModel(SignalRService signalR, Client apiClient, ChatService chatService,
-      AppStateService state)
+      AppStateService state, DataRepository data)
     {
       _signalR = signalR;
-      _api = apiClient;
+      _data = data;
       _appState = state;
       _chatService = chatService;
+      //foreach (var message in Messages)
+      //{
+      //  ;
+
+      //}
 
       ChatHeaderClickedCommand = new Command(async () => await OnChatHeaderClicked(chat), () => true);
-      SendMessageCommand = new Command(async() => { message = ""; await _chatService.SendMessageAsync(chat.Id, this.Message); });
+      SendMessageCommand = new Command(async() => 
+      {
+        await _chatService.SendMessageAsync(chat.Id, this.Message);
+        Message = "";
+        MessageSent?.Invoke();
+        //await _data.UpdateChatAsync(chat.Id);
+      });
     }
-    
-    partial void OnChatChanged(ChatDTO value)
+
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-      Messages = _chatService.GetMessages(chat.Id);
-
+      if (query.TryGetValue("Chat", out var value) && value is ChatDTO chat)
+      {
+        Chat = chat;
+      }
     }
 
+    //public void OnAppearing()
+    //{
+    //  if (Chat != null)
+    //  {
+
+    //    MainThread.BeginInvokeOnMainThread(async () =>
+    //    {
+    //      Messages = _chatService.GetMessages(chat.Id);
+    //    });
+
+    //  }
+    //}
+    //partial void OnChatChanged(ChatDTO value)
+    //{
+    //  MainThread.BeginInvokeOnMainThread(async () =>
+    //  {
+    //    Messages = _chatService.GetMessages(chat.Id);
+    //  });
+
+    //}
+
+    public async Task OnVisibleRangeChanged(int firstItem, int lastItem)
+    {
+      
+    }
     private async Task OnChatHeaderClicked(ChatDTO chat)
     {
       if (chat.Type.Id == _chatService.GroupTypeId)
       {
         // go to chat page
+        await NavigationService.GoToChatInfoPageAsync(chat);
       }
       else
       {
         // go to user page
+        var user = await _data.GetUserById(_data.PrivateChatUserId(chat));
+        await NavigationService.GoToUserPageAsync(user);
       }
 
     }

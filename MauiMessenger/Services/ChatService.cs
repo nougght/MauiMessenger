@@ -20,6 +20,7 @@ namespace MauiMessenger.Services
     private readonly AppStateService _appState;
 
 
+
     public ChatService(DataRepository data, Client api, SignalRService signalR, AppStateService appState)
     {
       _data = data;
@@ -28,6 +29,7 @@ namespace MauiMessenger.Services
       _appState = appState;
     }
 
+    
     public async Task SendMessageAsync(Guid chatId, string text)
     {
       try
@@ -43,7 +45,14 @@ namespace MauiMessenger.Services
         };
 
         // add temporary object for ui 
-        await _data.AddMessage(tmp);
+
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+
+          await _data.AddMessage(tmp);
+          await _data.UpdateChatAsync(tmp.ChatId);
+        }
+        );
 
         var msg = new CreateMessageRequest
         {
@@ -55,7 +64,14 @@ namespace MauiMessenger.Services
         // api request
         var response = await _api.MessagesPOSTAsync(msg);
         // replacing temporary object
-        await _data.UpdateMessage(response, tmp.Id);
+
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+          await _data.UpdateMessage(response, tmp.Id);
+          await _data.UpdateChatAsync(tmp.ChatId);
+
+        }
+        );
         // notifying other clients if online
         await _signalR.SendMessage(response);
 
@@ -71,7 +87,7 @@ namespace MauiMessenger.Services
 
     public ChatDTO? GetChat(Guid chatId) => _data.GetChat(chatId);
     public ObservableCollection<ChatDTO> GetChats() => _data.Chats;
-    public ObservableCollection<MessageDTO> GetMessages(Guid chatId) => _data.GetMessages(chatId);
+    public async Task<ObservableCollection<MessageDTO>> GetMessages(Guid chatId) => await _data.GetMessages(chatId);
 
     public ObservableCollection<ContactDTO> GetContacts() => _data.Contacts;
     public async Task LoadMessagesAsync(Guid chatId) => await _data.LoadMessagesAsync(chatId);
@@ -97,24 +113,34 @@ namespace MauiMessenger.Services
 
     public async Task<ChatDTO> CreatePrivateChat(Guid userId)
     {
-      var chat = await _api.ChatAsync(
-        new CreateChatRequest
-        {
-          Name = "",
-          Type = _data.PrivateTypeId,
-          CreatedBy = _appState.CurrentUser.UserId,
-          Members = new List<CreateMemberRequest>
+      var existing = _data.GetChatWithUser(userId);
+      if (existing == null)
+      {
+        var chat = await _api.ChatPOSTAsync(
+          new CreateChatRequest
           {
+            Name = "",
+            Type = _data.PrivateTypeId,
+            CreatedBy = _appState.CurrentUser.UserId,
+            Members = new List<CreateMemberRequest>
+            {
               new CreateMemberRequest { UserId = _appState.CurrentUser.UserId, Role = _data.MemberTypeId},
               new CreateMemberRequest { UserId = userId, Role = _data.MemberTypeId }
+            }
           }
-        }
-      );
-      chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
-      await _data.AddChat(chat);
+        );
 
-      await _signalR.NotifyChatCreated(chat.Id);
-      return chat;
+        chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
+        await _data.AddChat(chat);
+
+
+        await _signalR.NotifyChatCreated(chat.Id);
+        return chat;
+      }
+      else
+      {
+        throw new NotImplementedException();
+      }
     }
 
     public async Task<ChatDTO> CreateGroupChat(IEnumerable<UserDTO> users, string name)
@@ -123,7 +149,7 @@ namespace MauiMessenger.Services
       var members = users.Select(u => new CreateMemberRequest { UserId = u.UserId, Role = _data.MemberTypeId }).ToList();
       members.Add(new CreateMemberRequest { UserId = _appState.CurrentUser.UserId, Role = _data.OwnerTypeId });
 
-      var chat = await _api.ChatAsync(
+      var chat = await _api.ChatPOSTAsync(
 
         new CreateChatRequest
         {

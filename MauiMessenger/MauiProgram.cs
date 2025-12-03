@@ -1,10 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CommunityToolkit.Maui;
+using CommunityToolkit.Mvvm.DependencyInjection;
+using MauiMessenger.Models;
+using MauiMessenger.Services;
 using MauiMessenger.ViewModels;
 using MauiMessenger.Views;
-using MauiMessenger.Services;
 using Microsoft.Extensions.Configuration;
-using CommunityToolkit.Maui;
-using MauiMessenger.Models;
+using Microsoft.Extensions.Logging;
 
 namespace MauiMessenger
 {
@@ -60,8 +61,12 @@ namespace MauiMessenger
 #if DEBUG
       builder.Logging.AddDebug();
 #endif
+      var app = builder.Build();
 
-      return builder.Build();
+      // 🧠 Важно: подключаем DI к CommunityToolkit
+      Ioc.Default.ConfigureServices(app.Services);
+
+      return app;
     }
   }
 }

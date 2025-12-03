@@ -10,6 +10,8 @@ using MauiMessenger.Services;
 
 namespace MauiMessenger.ViewModels
 {
+
+  [QueryProperty(nameof(Chat), "Chat")]
   public partial class ChatInfoViewModel : BaseViewModel
   {
     private readonly ChatService _chatService;
@@ -25,13 +27,13 @@ namespace MauiMessenger.ViewModels
     public Command BackButtonClickedCommand { get; }
 
 
-    public ChatInfoViewModel(ChatService chatService, DataRepository data, AppStateService appState, Client api, ChatDTO chat)
+    public ChatInfoViewModel(ChatService chatService, DataRepository data, AppStateService appState, Client api)
     {
       _chatService = chatService;
       _data = data;
       _appState = appState;
       _api = api;
-      this.Chat = chat;
+      //this.Chat = chat;
 
       ChatMemberClickedCommand = new Command<Guid>(async (userId) =>
         await NavigationService.GoToUserPageAsync(await _data.GetUserById(userId)), (userId) => true);

@@ -28,7 +28,10 @@ namespace MauiMessenger.ViewModels
     public async Task OnContactClicked(Guid userId)
     {
       var chat = await _chatService.GetOrCreateChatAsync(userId);
-      await NavigationService.GoToChatAsync(chat);
+      await _chatService.LoadMessagesAsync(chat.Id);
+
+      // go to chat page
+      await NavigationService.GoToChatAsync(chat, await _chatService.GetMessages(chat.Id));
       // go to chat page
     }
 

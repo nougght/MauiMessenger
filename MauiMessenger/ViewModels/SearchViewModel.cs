@@ -15,6 +15,7 @@ namespace MauiMessenger.ViewModels
   public partial class SearchViewModel : BaseViewModel
   {
     private readonly Client _api;
+    private readonly ChatService _chatService;
 
     [ObservableProperty]
     private string searchQuery;
@@ -23,9 +24,24 @@ namespace MauiMessenger.ViewModels
     
     public ObservableCollection<UserDTO> SearchResults { get; } = new();
 
-    public SearchViewModel(Client api)
+    public Command BackButtonClickedCommand { get; }
+    public Command ToChatPageCommand { get; }
+
+    public SearchViewModel(Client api, ChatService chatService)
     {
       _api = api;
+      _chatService = chatService;
+
+      BackButtonClickedCommand = new Command(async () => await NavigationService.GoBackAsync());
+      ToChatPageCommand = new Command<Guid>(async (userId) =>
+      {
+
+        var chat = await _chatService.GetOrCreateChatAsync(userId);
+        await _chatService.LoadMessagesAsync(chat.Id);
+
+        // go to chat page
+        await NavigationService.GoToChatAsync(chat, await _chatService.GetMessages(chat.Id));
+      });
     }
 
     partial void OnSearchQueryChanged(string value)

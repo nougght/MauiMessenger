@@ -47,10 +47,11 @@ namespace MauiMessenger.ViewModels
     }
 
 
-    public void OnSearchQueryChanged(object sender, EventArgs e)
+    partial void OnSearchQueryChanged(string value)
     {
-      _ = SearchUsersAsync(SearchQuery);
+     _ = SearchUsersAsync(value);
     }
+
     private async Task SearchUsersAsync(string query)
     {
       if (string.IsNullOrEmpty(query))
@@ -70,7 +71,7 @@ namespace MauiMessenger.ViewModels
     {
       ClosePopupRequest?.Invoke();
       var chat = await _chatService.CreateGroupChat(SelectedGroupMembers.OfType<UserDTO>(), GroupName);
-      await NavigationService.GoToChatAsync(chat);
+      //await NavigationService.GoToChatAsync(chat);
     }
   }
 }

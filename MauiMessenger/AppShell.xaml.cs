@@ -14,6 +14,7 @@ namespace MauiMessenger
 #endif
       InitializeComponent();
 
+      FlyoutWidth = 150;
       Items.Add(
         new FlyoutItem
         {

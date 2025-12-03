@@ -56,13 +56,24 @@
                                             Source="image.png"
                                             VerticalOptions="Center" />
                                     </Border>
+                                    <VerticalStackLayout Grid.Row="0" Grid.Column="2">
+
+                                        <Label
+                                            Margin="10,0,0,0"
+                                            FontSize="30"
+                                            HorizontalOptions="FillAndExpand"
+                                            Text="{Binding Name}"
+                                            VerticalOptions="Center" />
+                                        <Label FontSize="15" Text="{Binding LastMessage.Content}" />
+                                    </VerticalStackLayout>
+
                                     <Label
                                         Grid.Row="0"
-                                        Grid.Column="2"
-                                        Margin="10,0,0,0"
-                                        FontSize="30"
-                                        HorizontalOptions="FillAndExpand"
-                                        Text="{Binding Name}"
+                                        Grid.Column="3"
+                                        Margin="10"
+                                        HorizontalOptions="End"
+                                        Text="{Binding UnreadMessagesCount}"
+                                        TextColor="Blue"
                                         VerticalOptions="Center" />
                                 </Grid>
                             </Border>

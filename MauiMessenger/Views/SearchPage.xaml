@@ -14,7 +14,7 @@
                 Grid.Column="0"
                 Margin="10"
                 Aspect="AspectFit"
-                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.BackPageCommand}"
+                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.BackButtonClickedCommand}"
                 HorizontalOptions="Start"
                 Source="back.png"
                 VerticalOptions="Center"
@@ -37,7 +37,7 @@
                         HorizontalOptions="FillAndExpand"
                         VerticalOptions="Start">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CreatePrivateChatCommand}" CommandParameter="{Binding UserId}" />
+                            <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ToChatPageCommand}" CommandParameter="{Binding UserId}" />
 
                         </Border.GestureRecognizers>
                         <Grid BackgroundColor="Transparent" ColumnDefinitions="Auto, Auto, *">
