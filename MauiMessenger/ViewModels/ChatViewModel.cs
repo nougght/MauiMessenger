@@ -89,10 +89,24 @@ namespace MauiMessenger.ViewModels
 
     //}
 
+    public int GetReadPosition()
+    {
+      return Messages.IndexOf(Messages.FirstOrDefault(m => m.Id == chat.LastReadMessageId)) + 1;
+    }
+
     public async Task OnVisibleRangeChanged(int firstItem, int lastItem)
     {
-      
+      var lastMessage = Messages[lastItem];
+      if (!lastMessage.IsRead)
+      {
+        //_data.UpdateChatReadPosition(chat.Id, lastMessage.Id);
+        //await Task.Delay(300);
+        await _chatService.UpdateChatReadPosition(chat.Id, lastMessage.Id);
+
+      }
     }
+
+
     private async Task OnChatHeaderClicked(ChatDTO chat)
     {
       if (chat.Type.Id == _chatService.GroupTypeId)

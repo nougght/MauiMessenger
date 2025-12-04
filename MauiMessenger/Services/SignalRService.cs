@@ -25,6 +25,8 @@ namespace MauiMessenger.Services
 
     public event Action<ChatDTO>? OnChatCreated;
 
+    public event Action<>
+
     public event Action? HubConnectionClosed;
 
     public SignalRService()
@@ -113,6 +115,12 @@ namespace MauiMessenger.Services
     public async Task SendMessage(MessageDTO message)
     {
       await _hubConnection.InvokeAsync("Send", message);
+    }
+
+
+    public async Task UpdateChatReadPosition(Guid chatId, Guid userId, Guid newReadPositionId)
+    {
+      await _hubConnection.InvokeAsync("UpdateChatReadPosition", chatId, userId, newReadPositionId);
     }
   }
 }

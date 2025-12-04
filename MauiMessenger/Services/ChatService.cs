@@ -47,11 +47,11 @@ namespace MauiMessenger.Services
         // add temporary object for ui 
 
         MainThread.BeginInvokeOnMainThread(async () =>
-        {
+          {
 
-          await _data.AddMessage(tmp);
-          await _data.UpdateChatAsync(tmp.ChatId);
-        }
+            await _data.AddMessage(tmp);
+            await _data.UpdateChatAsync(tmp.ChatId);
+          }
         );
 
         var msg = new CreateMessageRequest
@@ -166,5 +166,16 @@ namespace MauiMessenger.Services
       return chat;
     }
 
+
+    public async Task UpdateChatReadPosition(Guid chatId, Guid newReadPositionId)
+    {
+
+      await MainThread.InvokeOnMainThreadAsync(async () =>
+      {
+
+        await  _data.UpdateMessageReadStatuses(chatId, newReadPositionId);
+      }
+      );
+    }
   }
 }

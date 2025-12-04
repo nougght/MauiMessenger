@@ -63,6 +63,7 @@ public partial class ChatPage : ContentPage
     //{
     //  ScrollMessagesToBottom();
     //}
+    ScrollMessagesToUnread(this, EventArgs.Empty);
 
   }
 
@@ -73,6 +74,29 @@ public partial class ChatPage : ContentPage
 
     viewModel.OnVisibleRangeChanged(firstVisivle, lastVisible);
   }
+
+  private async void ScrollMessagesToIndex(int index)
+  {
+    if (MessagesView.ItemsSource is ObservableCollection<MessageDTO> items && items.Count > 0)
+    {
+      if (items.Count <= index)
+      {
+        index = items.Count - 1;
+      }
+      var item = items[index];
+      MessagesView.ScrollTo(index, position: ScrollToPosition.MakeVisible, animate: false);
+    }
+  }
+
+  private async void ScrollMessagesToUnread(object sender, EventArgs e)
+  {
+    var readPosition = viewModel.GetReadPosition();
+    viewModel.OnVisibleRangeChanged(readPosition, readPosition + 3);
+    ScrollMessagesToIndex(readPosition + 3);
+
+  }
+
+
   private async void ScrollMessagesToBottom(object sender, EventArgs e)
   {
     if (MessagesView.ItemsSource is ObservableCollection<MessageDTO> items && items.Count > 0)

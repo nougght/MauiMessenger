@@ -201,7 +201,7 @@ namespace MauiMessenger.Models
       var updated = await _api.ChatGETAsync(chatId, _appState.CurrentUser.UserId);
       updated.Name = existing.Name;
       await MainThread.InvokeOnMainThreadAsync(() => Chats[ind] = updated);
-      
+
       //existing.Name = updated.Name;
       //existing.LastMessage = updated.LastMessage;
       //existing.Members = updated.Members;
@@ -256,7 +256,7 @@ namespace MauiMessenger.Models
       var chat = GetChat(message.ChatId);
       if (chat != null)
       {
-        
+
         await MainThread.InvokeOnMainThreadAsync(async () =>
           {
             var msgs = (await GetMessages(message.ChatId));
@@ -325,5 +325,54 @@ namespace MauiMessenger.Models
     //  }
     //}
 
+
+
+    // try to use when chat closed or scroll ended
+    public async Task UpdateMessageReadStatuses(Guid chatId, Guid lastReadMessageId)
+    {
+      await Task.Run(async () =>
+      {
+        // Attention! work only when messages update before chat
+        var chat = GetChat(chatId);
+        if (chat == null) return;
+
+        if (!_messagesByChat.TryGetValue(chatId, out var messages) || messages == null) return;
+
+        var prevPosition = messages.Select((item, index) => (item, index))
+          .FirstOrDefault(m => m.item.Id == chat.LastReadMessageId);
+        int prevPositionIndex = prevPosition != default ? prevPosition.index : 0;
+
+        var newPosition = messages.Select((item, index) => (item, index))
+          .FirstOrDefault(m => m.item.Id == lastReadMessageId);
+        int newPositionIndex = newPosition != default ? newPosition.index : -1;
+
+        if (newPositionIndex < prevPositionIndex) return;
+
+        for (var i = prevPositionIndex; i <= newPositionIndex -2; ++i)
+        {
+          var old = messages[i];
+          // Копируем все поля кроме IsRead и ReadByCount — им присваиваем новые значения
+          await MainThread.InvokeOnMainThreadAsync(() =>
+          {
+            messages[i] = new MessageDTO
+            {
+              Id = old.Id,
+              ChatId = old.ChatId,
+              SenderId = old.SenderId,
+              Content = old.Content,
+              CreatedAt = old.CreatedAt,
+              Username = old.Username,
+              UpdatedAt = old.UpdatedAt,
+              IsRead = true,
+              ReadByCount = old.ReadByCount + 1
+            };
+          });
+        }
+      });
+    }
+    //public async Task UpdateChatReadPosition(Guid chatId, Guid lastReadMessageId)
+    //{
+    //  Chats.FirstOrDefault(c => c.Id == chatId).LastReadMessageId;
+    //}
   }
 }
