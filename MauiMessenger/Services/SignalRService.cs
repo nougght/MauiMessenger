@@ -25,7 +25,7 @@ namespace MauiMessenger.Services
 
     public event Action<ChatDTO>? OnChatCreated;
 
-    public event Action<>
+    public event Action<Guid, Guid, Guid, DateTime>? OnUpdateReadStatuses;
 
     public event Action? HubConnectionClosed;
 
@@ -65,6 +65,11 @@ namespace MauiMessenger.Services
         OnChatCreated?.Invoke(chat);
       });
 
+      _hubConnection.On<Guid, Guid, Guid, DateTime>("UpdateReadStatuses", (chatId, userId, positionId, readAt) =>
+      {
+        //AddLocalChat(chat);
+        OnUpdateReadStatuses?.Invoke(chatId, userId, positionId, readAt);
+      });
 
       IsConnected = false;
     }

@@ -16,15 +16,17 @@ namespace MauiMessenger.ViewModels
     private readonly Client _api;
     private readonly DataRepository _data;
     private readonly AppStateService _appState;
+    private readonly ChatService _chatService;
 
 
     public MainViewModel(SignalRService signalR, Client apiClient,
-      DataRepository data, AppStateService state)
+      DataRepository data, AppStateService state, ChatService chatService)
     {
       _signalR = signalR;
       _api = apiClient;
       _data = data;
       _appState = state;
+      _chatService = chatService;
 
 
       // trying without mainthread invoke
@@ -46,6 +48,8 @@ namespace MauiMessenger.ViewModels
           await _data.UpdateChatAsync(message.ChatId);
         }
       };
+
+      _signalR.OnUpdateReadStatuses += _chatService.
     }
   }
 }

@@ -1,4 +1,5 @@
-﻿using MauiMessenger.Models;
+﻿using CloudKit;
+using MauiMessenger.Models;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Collections.Generic;
@@ -165,17 +166,34 @@ namespace MauiMessenger.Services
       await _signalR.NotifyChatCreated(chat.Id);
       return chat;
     }
-
-
-    public async Task UpdateChatReadPosition(Guid chatId, Guid newReadPositionId)
+    
+    public async Task MarkMessagesRead(Guid chatId, Guid userId, Guid readPositionId, DateTime readAt)
     {
 
+    }
+    // send new chat position by api and signalr(for online users)
+    public async Task UpdateChatReadPosition(Guid chatId, Guid newReadPositionId)
+    {
+      await _api.UpdateChatReadPosition(chatId, _appState.CurrentUser.UserId, newReadPositionId);
+      await _signalR.UpdateChatReadPosition(chatId, _appState.CurrentUser.UserId, newReadPositionId);
+
+      //await MainThread.InvokeOnMainThreadAsync(async () =>
+      //{
+
+      //  await  _data.UpdateMessageReadStatuses(chatId, newReadPositionId);
+      //}
+      //);
+    }
+
+    public async Task OnChatClosed(Guid chatId, Guid LastReadMessageId)
+    {
       await MainThread.InvokeOnMainThreadAsync(async () =>
       {
-
-        await  _data.UpdateMessageReadStatuses(chatId, newReadPositionId);
-      }
-      );
+        // updating local chat read position
+        await _data.UpdateChatReadPosition(chatId, newReadPositionId);
+      });
     }
+
+
   }
 }

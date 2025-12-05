@@ -110,6 +110,7 @@ public partial class ChatPage : ContentPage
   {
 
     await Shell.Current.Navigation.PopModalAsync();
+
   }
 
   private void MessagesView_Scrolled(object sender, ItemsViewScrolledEventArgs e)

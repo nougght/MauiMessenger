@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -327,28 +328,47 @@ namespace MauiMessenger.Models
 
 
 
-    // try to use when chat closed or scroll ended
-    public async Task UpdateMessageReadStatuses(Guid chatId, Guid lastReadMessageId)
+    public async Task MarkMessagesRead(Guid chatId, Guid userId, Guid readPositionId, DateTime readAt)
     {
-      await Task.Run(async () =>
+      _messagesByChat.TryGetValue(chatId, out var messages);
+
+      for (var i = 0; i < messages.Count; i++)
       {
+
+        var old = messages[i];
+
+        messages[i] = new MessageDTO
+        {
+          Id = old.Id,
+          ChatId = old.ChatId,
+          SenderId = old.SenderId,
+          Content = old.Content,
+          CreatedAt = old.CreatedAt,
+          Username = old.Username,
+          UpdatedAt = old.UpdatedAt,
+          IsRead = true,
+          ReadByCount = old.ReadByCount + 1
+        };
+      }
+    }
+    // try to use when chat closed or scroll ended
+    public async Task UpdateMessageReadStatuses(Guid chatId, Guid oldReadPositionMessageId, Guid newReadPositionMessageId)
+    {
         // Attention! work only when messages update before chat
-        var chat = GetChat(chatId);
-        if (chat == null) return;
 
         if (!_messagesByChat.TryGetValue(chatId, out var messages) || messages == null) return;
 
         var prevPosition = messages.Select((item, index) => (item, index))
-          .FirstOrDefault(m => m.item.Id == chat.LastReadMessageId);
+          .FirstOrDefault(m => m.item.Id == oldReadPositionMessageId);
         int prevPositionIndex = prevPosition != default ? prevPosition.index : 0;
 
         var newPosition = messages.Select((item, index) => (item, index))
-          .FirstOrDefault(m => m.item.Id == lastReadMessageId);
-        int newPositionIndex = newPosition != default ? newPosition.index : -1;
+          .FirstOrDefault(m => m.item.Id == newReadPositionMessageId);
+        int newPositionIndex = newPosition != default ? newPosition.index : prevPositionIndex;
 
         if (newPositionIndex < prevPositionIndex) return;
 
-        for (var i = prevPositionIndex; i <= newPositionIndex -2; ++i)
+        for (var i = prevPositionIndex; i <= newPositionIndex; ++i)
         {
           var old = messages[i];
           // Копируем все поля кроме IsRead и ReadByCount — им присваиваем новые значения
@@ -368,7 +388,6 @@ namespace MauiMessenger.Models
             };
           });
         }
-      });
     }
     //public async Task UpdateChatReadPosition(Guid chatId, Guid lastReadMessageId)
     //{

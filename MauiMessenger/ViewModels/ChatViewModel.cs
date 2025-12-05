@@ -31,14 +31,18 @@ namespace MauiMessenger.ViewModels
     public Command ChatHeaderClickedCommand { get; }
     public Command SendMessageCommand { get; }
 
-    public UserDTO User { get => _appState.CurrentUser;}
+    public UserDTO User { get => _appState.CurrentUser; }
+
+    public Guid? LastReadMessageId;
 
 
-    public event Action MessageSent; 
+    public event Action MessageSent;
+
+    public event Action<Guid, Guid> ChatClosed;
 
 
     public ChatViewModel(SignalRService signalR, Client apiClient, ChatService chatService,
-      AppStateService state, DataRepository data)
+  AppStateService state, DataRepository data)
     {
       _signalR = signalR;
       _data = data;
@@ -51,14 +55,18 @@ namespace MauiMessenger.ViewModels
       //}
 
       ChatHeaderClickedCommand = new Command(async () => await OnChatHeaderClicked(chat), () => true);
-      SendMessageCommand = new Command(async() => 
+      SendMessageCommand = new Command(async () =>
       {
         await _chatService.SendMessageAsync(chat.Id, this.Message);
         Message = "";
         MessageSent?.Invoke();
         //await _data.UpdateChatAsync(chat.Id);
       });
+      LastReadMessageId = Chat.LastReadMessageId;
+
+      ChatClicked += _chatService.OnChatClosed;
     }
+
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {

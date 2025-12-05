@@ -42,12 +42,7 @@
                             VerticalOptions="End" />
                     </HorizontalStackLayout>
                 </Border>
-                <Label
-                    Grid.Column="2"
-                    Margin="10,0"
-                    FontSize="20"
-                    IsVisible="{Binding IsRead}"
-                    Text="✔" />
+                
             </Grid>
         </DataTemplate>
 
@@ -63,6 +58,11 @@
                     StrokeThickness="1">
 
                     <HorizontalStackLayout>
+                        <Label
+                            Margin="10,0"
+                            FontSize="20"
+                            IsVisible="{Binding IsRead}"
+                            Text="✔" />
                         <Label
                             FontSize="24"
                             HorizontalOptions="Start"
