@@ -1,4 +1,4 @@
-﻿using CloudKit;
+﻿//using CloudKit;
 using MauiMessenger.Models;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
@@ -169,14 +169,27 @@ namespace MauiMessenger.Services
     
     public async Task MarkMessagesRead(Guid chatId, Guid userId, Guid readPositionId, DateTime readAt)
     {
-
+      await _data.MarkMessagesRead(chatId, userId, readPositionId, readAt);
     }
-    // send new chat position by api and signalr(for online users)
-    public async Task UpdateChatReadPosition(Guid chatId, Guid newReadPositionId)
-    {
-      await _api.UpdateChatReadPosition(chatId, _appState.CurrentUser.UserId, newReadPositionId);
-      await _signalR.UpdateChatReadPosition(chatId, _appState.CurrentUser.UserId, newReadPositionId);
 
+
+    // send new chat position by api and signalr(for online users)
+    public async Task UpdateChatReadPosition(Guid chatId, Guid newReadPositionId, DateTime lastReadAt)
+    {
+      try
+      {
+        await _api.UserReadPositionAsync(chatId, _appState.CurrentUser.UserId,
+          new PatchReadPositionRequest
+          {
+            LastReadMessageId = newReadPositionId,
+            LastReadAt = lastReadAt,
+          });
+        await _signalR.UpdateChatReadPosition(chatId, _appState.CurrentUser.UserId, newReadPositionId, lastReadAt);
+      }
+      catch(Exception ex)
+      {
+        throw;
+      }
       //await MainThread.InvokeOnMainThreadAsync(async () =>
       //{
 
@@ -185,12 +198,16 @@ namespace MauiMessenger.Services
       //);
     }
 
-    public async Task OnChatClosed(Guid chatId, Guid LastReadMessageId)
+    public async Task OnChatClosed(Guid chatId, Guid lastReadMessageId)
     {
       await MainThread.InvokeOnMainThreadAsync(async () =>
       {
         // updating local chat read position
-        await _data.UpdateChatReadPosition(chatId, newReadPositionId);
+        var chat =GetChat(chatId);
+        var oldReadPositionId = chat.Id;
+
+        var updatedCount = await _data.UpdateMessageReadStatuses(chatId, oldReadPositionId, lastReadMessageId);
+        await _data.UpdateChatReadPosition(chatId, lastReadMessageId, updatedCount);
       });
     }
 

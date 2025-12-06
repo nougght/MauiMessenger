@@ -10,9 +10,10 @@ using System.Threading.Tasks;
 
 namespace MauiMessenger.ViewModels
 {
-  [QueryProperty(nameof(Chat), "Chat")]
+  //[QueryProperty(nameof(Chat), "Chat")]
   //[QueryProperty(nameof(Messages), "Messages")]
-  public partial class ChatViewModel : BaseViewModel, IQueryAttributable
+  public partial class ChatViewModel : BaseViewModel
+  //, IQueryAttributable
   {
 
     private readonly SignalRService _signalR;
@@ -62,19 +63,18 @@ namespace MauiMessenger.ViewModels
         MessageSent?.Invoke();
         //await _data.UpdateChatAsync(chat.Id);
       });
-      LastReadMessageId = Chat.LastReadMessageId;
 
-      ChatClicked += _chatService.OnChatClosed;
+      ChatClosed += async (chatId, lastReadMessageId) => { await _chatService.OnChatClosed(chatId, lastReadMessageId); };
     }
 
 
-    public void ApplyQueryAttributes(IDictionary<string, object> query)
-    {
-      if (query.TryGetValue("Chat", out var value) && value is ChatDTO chat)
-      {
-        Chat = chat;
-      }
-    }
+    //public void ApplyQueryAttributes(IDictionary<string, object> query)
+    //{
+    //  if (query.TryGetValue("Chat", out var value) && value is ChatDTO chat)
+    //  {
+    //    Chat = chat;
+    //  }
+    //}
 
     //public void OnAppearing()
     //{
@@ -102,15 +102,30 @@ namespace MauiMessenger.ViewModels
       return Messages.IndexOf(Messages.FirstOrDefault(m => m.Id == chat.LastReadMessageId)) + 1;
     }
 
-    public async Task OnVisibleRangeChanged(int firstItem, int lastItem)
+    public async Task OnVisibleRangeChanged(int firstItem, int lastItem, DateTime readAt)
     {
-      var lastMessage = Messages[lastItem];
-      if (!lastMessage.IsRead)
+      if (lastItem >= Messages.Count)
       {
-        //_data.UpdateChatReadPosition(chat.Id, lastMessage.Id);
-        //await Task.Delay(300);
-        await _chatService.UpdateChatReadPosition(chat.Id, lastMessage.Id);
+        lastItem = Messages.Count - 1;
+      }
 
+      var lastMessage = Messages[lastItem];
+     ///* if (!lastMessage.IsRead)
+     // {
+     //   //_data.UpdateChatReadPosition(chat.Id, lastMessage.Id);
+     //   //await Task.Delay(300);
+
+     // }*/
+
+      var i = firstItem;
+      while (i <= lastItem && (Messages[i].IsRead || Messages[i].SenderId == _appState.CurrentUser.UserId))
+      {
+        ++i;
+      }
+      if (i <= lastItem)
+      {
+
+        await _chatService.UpdateChatReadPosition(Chat.Id, lastMessage.Id, readAt);
       }
     }
 

@@ -22,6 +22,7 @@ namespace MauiMessenger.Services
       {
         chatVm.Chat = chat;
         chatVm.Messages = messages;
+        chatVm.LastReadMessageId = chat.LastReadMessageId;
       });
 
       var page = new ChatPage(chatVm);

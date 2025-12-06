@@ -72,7 +72,8 @@ public partial class ChatPage : ContentPage
     var firstVisivle = e.FirstVisibleItemIndex;
     var lastVisible = e.LastVisibleItemIndex;
 
-    viewModel.OnVisibleRangeChanged(firstVisivle, lastVisible);
+    viewModel.OnVisibleRangeChanged(firstVisivle, lastVisible, DateTime.UtcNow);
+
   }
 
   private async void ScrollMessagesToIndex(int index)
@@ -91,7 +92,7 @@ public partial class ChatPage : ContentPage
   private async void ScrollMessagesToUnread(object sender, EventArgs e)
   {
     var readPosition = viewModel.GetReadPosition();
-    viewModel.OnVisibleRangeChanged(readPosition, readPosition + 3);
+    viewModel.OnVisibleRangeChanged(readPosition, readPosition + 3, DateTime.UtcNow);
     ScrollMessagesToIndex(readPosition + 3);
 
   }

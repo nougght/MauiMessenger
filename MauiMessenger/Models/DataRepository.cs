@@ -332,66 +332,85 @@ namespace MauiMessenger.Models
     {
       _messagesByChat.TryGetValue(chatId, out var messages);
 
-      for (var i = 0; i < messages.Count; i++)
+      await MainThread.InvokeOnMainThreadAsync(() =>
       {
-
-        var old = messages[i];
-
-        messages[i] = new MessageDTO
+        for (var i = 0; i < messages.Count; i++)
         {
-          Id = old.Id,
-          ChatId = old.ChatId,
-          SenderId = old.SenderId,
-          Content = old.Content,
-          CreatedAt = old.CreatedAt,
-          Username = old.Username,
-          UpdatedAt = old.UpdatedAt,
-          IsRead = true,
-          ReadByCount = old.ReadByCount + 1
-        };
+
+          var old = messages[i];
+
+          messages[i] = new MessageDTO
+          {
+            Id = old.Id,
+            ChatId = old.ChatId,
+            SenderId = old.SenderId,
+            Content = old.Content,
+            CreatedAt = old.CreatedAt,
+            Username = old.Username,
+            UpdatedAt = old.UpdatedAt,
+            IsRead = true,
+            ReadByCount = old.ReadByCount + 1
+          };
+        }
       }
     }
     // try to use when chat closed or scroll ended
-    public async Task UpdateMessageReadStatuses(Guid chatId, Guid oldReadPositionMessageId, Guid newReadPositionMessageId)
+    public async Task<int> UpdateMessageReadStatuses(Guid chatId, Guid oldReadPositionMessageId, Guid newReadPositionMessageId)
     {
-        // Attention! work only when messages update before chat
+      // Attention! work only when messages update before chat
 
-        if (!_messagesByChat.TryGetValue(chatId, out var messages) || messages == null) return;
+      if (!_messagesByChat.TryGetValue(chatId, out var messages) || messages == null) return 0;
 
-        var prevPosition = messages.Select((item, index) => (item, index))
-          .FirstOrDefault(m => m.item.Id == oldReadPositionMessageId);
-        int prevPositionIndex = prevPosition != default ? prevPosition.index : 0;
+      var prevPosition = messages.Select((item, index) => (item, index))
+        .FirstOrDefault(m => m.item.Id == oldReadPositionMessageId);
+      int prevPositionIndex = prevPosition != default ? prevPosition.index : 0;
 
-        var newPosition = messages.Select((item, index) => (item, index))
-          .FirstOrDefault(m => m.item.Id == newReadPositionMessageId);
-        int newPositionIndex = newPosition != default ? newPosition.index : prevPositionIndex;
+      var newPosition = messages.Select((item, index) => (item, index))
+        .FirstOrDefault(m => m.item.Id == newReadPositionMessageId);
+      int newPositionIndex = newPosition != default ? newPosition.index : prevPositionIndex;
 
-        if (newPositionIndex < prevPositionIndex) return;
-
+      if (newPositionIndex < prevPositionIndex) return 0;
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
         for (var i = prevPositionIndex; i <= newPositionIndex; ++i)
         {
           var old = messages[i];
           // Копируем все поля кроме IsRead и ReadByCount — им присваиваем новые значения
-          await MainThread.InvokeOnMainThreadAsync(() =>
+
+          messages[i] = new MessageDTO
           {
-            messages[i] = new MessageDTO
-            {
-              Id = old.Id,
-              ChatId = old.ChatId,
-              SenderId = old.SenderId,
-              Content = old.Content,
-              CreatedAt = old.CreatedAt,
-              Username = old.Username,
-              UpdatedAt = old.UpdatedAt,
-              IsRead = true,
-              ReadByCount = old.ReadByCount + 1
-            };
-          });
+            Id = old.Id,
+            ChatId = old.ChatId,
+            SenderId = old.SenderId,
+            Content = old.Content,
+            CreatedAt = old.CreatedAt,
+            Username = old.Username,
+            UpdatedAt = old.UpdatedAt,
+            IsRead = true,
+            ReadByCount = old.ReadByCount + 1
+          };
         }
+      });
+      return newPositionIndex - prevPositionIndex + 1;
     }
-    //public async Task UpdateChatReadPosition(Guid chatId, Guid lastReadMessageId)
-    //{
-    //  Chats.FirstOrDefault(c => c.Id == chatId).LastReadMessageId;
-    //}
+
+
+    public async Task UpdateChatReadPosition(Guid chatId, Guid lastReadMessageId, int updatedMessagesCount)
+    {
+      var chat = GetChat(chatId);
+      var index = Chats.IndexOf(chat);
+
+      Chats[index] = new ChatDTO
+      {
+        Id = chat.Id,
+        Members = chat.Members,
+        Name = chat.Name,
+        Type = chat.Type,
+        LastMessage = chat.LastMessage,
+        UpdatedAt = chat.UpdatedAt,
+        UnreadMessagesCount = chat.UnreadMessagesCount < updatedMessagesCount ? 0 : chat.UnreadMessagesCount - updatedMessagesCount,
+        LastReadMessageId = lastReadMessageId
+      };
+    }
   }
 }

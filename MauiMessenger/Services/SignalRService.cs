@@ -123,9 +123,9 @@ namespace MauiMessenger.Services
     }
 
 
-    public async Task UpdateChatReadPosition(Guid chatId, Guid userId, Guid newReadPositionId)
+    public async Task UpdateChatReadPosition(Guid chatId, Guid userId, Guid newReadPositionId, DateTime readAt)
     {
-      await _hubConnection.InvokeAsync("UpdateChatReadPosition", chatId, userId, newReadPositionId);
+      await _hubConnection.InvokeAsync("UpdateChatReadPosition", chatId, userId, newReadPositionId, readAt);
     }
   }
 }
