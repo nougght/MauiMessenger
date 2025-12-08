@@ -45,14 +45,17 @@ namespace MauiMessenger.ViewModels
         {
           
           await _data.AddMessage(message);
-          await _data.UpdateChatAsync(message.ChatId);
+          //await _data.UpdateChatAsync(message.ChatId);
         }
       };
 
       // mark our sent messages as read
       _signalR.OnUpdateReadStatuses += async (chatId, userId, readPositionId, readAt) =>
       {
-        await _data.MarkMessagesRead(chatId, userId, readPositionId, readAt);
+        if (userId != _appState.CurrentUser.UserId)
+        {
+          await _data.MarkMessagesRead(chatId, userId, readPositionId, readAt);
+        }
       };
     }
   }

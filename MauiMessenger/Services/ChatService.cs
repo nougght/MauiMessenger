@@ -88,7 +88,8 @@ namespace MauiMessenger.Services
 
     public ChatDTO? GetChat(Guid chatId) => _data.GetChat(chatId);
     public ObservableCollection<ChatDTO> GetChats() => _data.Chats;
-    public async Task<ObservableCollection<MessageDTO>> GetMessages(Guid chatId) => await _data.GetMessages(chatId);
+    public async Task<ObservableCollection<ChatItem>> GetChatItems(Guid chatId) => await _data.GetChatItems(chatId);
+    public async Task<List<int>> GetMessageIndexes(Guid chatId) =>  await _data.GetMessageIndexes(chatId);
 
     public ObservableCollection<ContactDTO> GetContacts() => _data.Contacts;
     public async Task LoadMessagesAsync(Guid chatId) => await _data.LoadMessagesAsync(chatId);
@@ -198,16 +199,20 @@ namespace MauiMessenger.Services
       //);
     }
 
-    public async Task OnChatClosed(Guid chatId, Guid lastReadMessageId)
+    public async Task OnChatClosed(Guid chatId, Guid? lastReadMessageId)
     {
+      if (lastReadMessageId == null)
+      {
+        return;
+      }
       await MainThread.InvokeOnMainThreadAsync(async () =>
       {
         // updating local chat read position
         var chat =GetChat(chatId);
         var oldReadPositionId = chat.Id;
 
-        var updatedCount = await _data.UpdateMessageReadStatuses(chatId, oldReadPositionId, lastReadMessageId);
-        await _data.UpdateChatReadPosition(chatId, lastReadMessageId, updatedCount);
+        var updatedCount = await _data.UpdateMessageReadStatuses(chatId, oldReadPositionId, lastReadMessageId!.Value);
+        await _data.UpdateChatReadPosition(chatId, lastReadMessageId!.Value, updatedCount);
       });
     }
 

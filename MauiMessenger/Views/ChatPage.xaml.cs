@@ -11,24 +11,55 @@ public class MessageTemplateSelector : DataTemplateSelector
 {
   public DataTemplate IncomingTemplate { get; set; }
   public DataTemplate OutgoingTemplate { get; set; }
-
+  public DataTemplate ServiceTemplate { get; set; }
+  public DataTemplate DaySeparatorTemplate { get; set; }
+  public DataTemplate UnreadMarkerTemplate { get; set; }
+  public DataTemplate LoadingTemplate { get; set; }
   public static Guid CurrentUserId { get; set; }
 
   protected override DataTemplate OnSelectTemplate(object item, BindableObject container)
   {
-    if (item is MessageDTO message)
+    return item switch
     {
-      if (message.SenderId == CurrentUserId)
-      {
-        return OutgoingTemplate;
-      }
-    }
-    return IncomingTemplate;
+      MessageItem msg when msg.Message.SenderId == CurrentUserId => OutgoingTemplate,
+      MessageItem msg when msg.Message.SenderId != CurrentUserId => IncomingTemplate,
+      ServiceMessageItem => ServiceTemplate,
+      DaySeparatorItem => DaySeparatorTemplate,
+      UnreadMarkerItem => UnreadMarkerTemplate,
+      _ => LoadingTemplate
+    };
 
   }
 }
 
+public class VisibleBehavior : Behavior<VisualElement>
+{
+  protected override void OnAttachedTo(VisualElement bindable)
+  {
+    base.OnAttachedTo(bindable);
+    bindable.Loaded += Bindable_Loaded;
+    bindable.Unloaded += Bindable_Unloaded;
+  }
 
+  private void Bindable_Loaded(object sender, EventArgs e)
+  {
+    if (sender is VisualElement ve && ve.BindingContext is ChatItem item)
+      item.IsVisible = true;
+  }
+
+  private void Bindable_Unloaded(object sender, EventArgs e)
+  {
+    if (sender is VisualElement ve && ve.BindingContext is ChatItem item)
+      item.IsVisible = false;
+  }
+
+  protected override void OnDetachingFrom(VisualElement bindable)
+  {
+    bindable.Loaded -= Bindable_Loaded;
+    bindable.Unloaded -= Bindable_Unloaded;
+    base.OnDetachingFrom(bindable);
+  }
+}
 
 public partial class ChatPage : ContentPage
 {
@@ -43,14 +74,14 @@ public partial class ChatPage : ContentPage
 
     this.viewModel = vm;
     BindingContext = viewModel;
-    viewModel.MessageSent += () => 
+    viewModel.MessageSent += () =>
       { ScrollMessagesToBottom(viewModel, EventArgs.Empty); };
 
     MessageTemplateSelector.CurrentUserId = vm.User.UserId;
     //vm.MessageSent += ScrollMessagesToBottom;
 #if DEBUG
     Debug.WriteLine($"[ChatPage] BindingContext = {BindingContext?.GetType().Name}");
-    Debug.WriteLine($"[ChatPage] Messages = {viewModel.Messages?.Count}");
+    Debug.WriteLine($"[ChatPage] Messages = {viewModel.ChatItems?.Count}");
 #endif
   }
 
@@ -63,12 +94,17 @@ public partial class ChatPage : ContentPage
     //{
     //  ScrollMessagesToBottom();
     //}
+    await Task.Delay(500);
     ScrollMessagesToUnread(this, EventArgs.Empty);
 
   }
 
+  bool _scrollEventWorked = false;
+
   void OnScrolled(object sender, ItemsViewScrolledEventArgs e)
   {
+    _scrollEventWorked = true;
+
     var firstVisivle = e.FirstVisibleItemIndex;
     var lastVisible = e.LastVisibleItemIndex;
 
@@ -78,41 +114,64 @@ public partial class ChatPage : ContentPage
 
   private async void ScrollMessagesToIndex(int index)
   {
-    if (MessagesView.ItemsSource is ObservableCollection<MessageDTO> items && items.Count > 0)
+    if (MessagesView.ItemsSource is ObservableCollection<ChatItem> items && items.Count > 0)
     {
-      if (items.Count <= index)
+      if (viewModel.Indexes.Count <= index)
       {
-        index = items.Count - 1;
+        index = viewModel.Indexes[viewModel.Indexes.Count - 1];
       }
       var item = items[index];
-      MessagesView.ScrollTo(index, position: ScrollToPosition.MakeVisible, animate: false);
+      await MainThread.InvokeOnMainThreadAsync(() => 
+      MessagesView.ScrollTo(item, position: ScrollToPosition.MakeVisible, animate: false)
+      );
     }
   }
+
+
 
   private async void ScrollMessagesToUnread(object sender, EventArgs e)
   {
     var readPosition = viewModel.GetReadPosition();
-    viewModel.OnVisibleRangeChanged(readPosition, readPosition + 3, DateTime.UtcNow);
-    ScrollMessagesToIndex(readPosition + 3);
+    //viewModel.OnVisibleRangeChanged(readPosition, readPosition + 3, DateTime.UtcNow);
+
+    _scrollEventWorked = false;
+
+    // Просим MAUI проскроллить
+    ScrollMessagesToIndex(readPosition == -1 ? viewModel.Indexes.LastOrDefault(i => true) : readPosition + 3);
+
+
+    // Даём MAUI время вызвать событие (они вызываются на следующем UI тикe)
+    await Task.Delay(50);
+
+    if (!_scrollEventWorked)
+    {
+      var chatItems = MessagesView.ItemsSource as ObservableCollection<ChatItem>;
+      var msgs = chatItems.OfType<MessageItem>().ToList();
+
+      var i = 0;
+      while (i < msgs.Count && msgs[i].IsVisible)
+      {
+        ++i;
+      }
+      if (i > 0)
+      {
+        i = i == msgs.Count ? i - 1 : i;
+        await viewModel.OnVisibleRangeChanged(readPosition, chatItems.IndexOf(msgs[i] as ChatItem), DateTime.UtcNow);
+      }
+    }
 
   }
 
 
   private async void ScrollMessagesToBottom(object sender, EventArgs e)
   {
-    if (MessagesView.ItemsSource is ObservableCollection<MessageDTO> items && items.Count > 0)
+    if (MessagesView.ItemsSource is ObservableCollection<ChatItem> items && items.Count > 0)
     {
       var last = items[items.Count - 1];
       MessagesView.ScrollTo(last, position: ScrollToPosition.MakeVisible, animate: false);
     }
   }
 
-  public async void BackButton_Clicked(object sender, EventArgs e)
-  {
-
-    await Shell.Current.Navigation.PopModalAsync();
-
-  }
 
   private void MessagesView_Scrolled(object sender, ItemsViewScrolledEventArgs e)
   {

@@ -8,13 +8,17 @@
     <ContentPage.Resources>
         <DataTemplate x:Key="IncomingMessageTemplate">
             <Grid ColumnDefinitions="Auto, *" HorizontalOptions="FillAndExpand">
+
+                <Grid.Behaviors>
+                    <local:VisibleBehavior />
+                </Grid.Behaviors>
                 <!--  Имя отправителя  -->
                 <Label
                     Grid.Column="0"
                     Margin="10,0"
                     FontAttributes="Bold"
                     FontSize="24"
-                    Text="{Binding Username}" />
+                    Text="{Binding Message.Username}" />
 
                 <!--  Сообщение  -->
                 <Border
@@ -32,13 +36,14 @@
                             HorizontalOptions="Start"
                             HorizontalTextAlignment="Center"
                             LineBreakMode="WordWrap"
-                            Text="{Binding Content}"
+                            Text="{Binding Message.Content}"
                             VerticalOptions="Start"
                             VerticalTextAlignment="Center" />
                         <Label
                             FontSize="16"
                             HorizontalOptions="End"
-                            Text="{Binding UpdatedAt, StringFormat='{0:HH:mm}'}"
+                            Margin="10, 0"
+                            Text="{Binding Message.UpdatedAt, StringFormat='{0:HH:mm}'}"
                             VerticalOptions="End" />
                     </HorizontalStackLayout>
                 </Border>
@@ -61,31 +66,99 @@
                         <Label
                             Margin="10,0"
                             FontSize="20"
-                            IsVisible="{Binding IsRead}"
+                            IsVisible="{Binding Message.IsRead}"
                             Text="✔" />
                         <Label
                             FontSize="24"
                             HorizontalOptions="Start"
                             HorizontalTextAlignment="Center"
                             LineBreakMode="WordWrap"
-                            Text="{Binding Content}"
+                            Text="{Binding Message.Content}"
                             VerticalOptions="Start"
                             VerticalTextAlignment="Center" />
                         <Label
                             FontSize="16"
                             HorizontalOptions="End"
-                            Text="{Binding UpdatedAt, StringFormat='{0:HH:mm}'}"
+                            Margin="10, 0"
+                            Text="{Binding Message.UpdatedAt, StringFormat='{0:HH:mm}'}"
                             VerticalOptions="End" />
                     </HorizontalStackLayout>
                 </Border>
             </Grid>
         </DataTemplate>
 
+        <DataTemplate x:Key="ServiceMessageTemplate">
+            <HorizontalStackLayout
+                HorizontalOptions="Center">
+                <Label
+                     FontSize="24"
+                     HorizontalTextAlignment="Center"
+                     LineBreakMode="WordWrap"
+                     Text="{Binding Text}"
+                     VerticalOptions="Center"
+                     VerticalTextAlignment="Center" />
+                <Label
+                    Margin="10, 0"
+                     FontSize="16"
+                     HorizontalOptions="End"
+                     Text="{Binding CreatedAt, StringFormat='{0:HH:mm}'}"
+                      />
+            </HorizontalStackLayout>
+        </DataTemplate>
+
+
+        <DataTemplate x:Key="DaySeparatorMessageTemplate">
+            <HorizontalStackLayout
+                HorizontalOptions="Center">
+                <Label
+                     FontSize="16"
+                     HorizontalOptions="Center"
+                     Text="{Binding Date, StringFormat='{0:dd MMMM yyyy}'}"
+                      />
+            </HorizontalStackLayout>
+        </DataTemplate>
+
+
+        <DataTemplate x:Key="UnreadMarkerMessageTemplate">
+            <Grid
+                ColumnDefinitions="*"
+                BackgroundColor="Purple"
+                
+                >
+                <Label
+                    Grid.Column="0"
+                    Margin="0, 10 "
+                     FontSize="20"
+                     HorizontalOptions="CenterAndExpand"
+                     Text="{Binding Text}"
+                    TextColor="Black"
+                      />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="LoadingMessageTemplate">
+            <Grid
+                ColumnDefinitions="*"
+                BackgroundColor="Purple"
+                
+                >
+
+                <ActivityIndicator
+            HorizontalOptions="CenterAndExpand"
+            IsRunning="true"/>
+            </Grid>
+        </DataTemplate>
+
         <local:MessageTemplateSelector
             x:Key="MessageSelector"
             IncomingTemplate="{StaticResource IncomingMessageTemplate}"
-            OutgoingTemplate="{StaticResource OutgoingMessageTemplate}" />
+            OutgoingTemplate="{StaticResource OutgoingMessageTemplate}"
+            ServiceTemplate="{StaticResource ServiceMessageTemplate}"
+            DaySeparatorTemplate ="{StaticResource DaySeparatorMessageTemplate}"
+            UnreadMarkerTemplate="{StaticResource UnreadMarkerMessageTemplate}"
+            LoadingTemplate="{StaticResource LoadingMessageTemplate}" />
     </ContentPage.Resources>
+    
     <Grid
         BackgroundColor="Transparent"
         ColumnDefinitions="*"
@@ -109,7 +182,7 @@
                     Margin="5"
                     Aspect="AspectFill"
                     BackgroundColor="Transparent"
-                    Clicked="BackButton_Clicked"
+                    Command="{Binding BackButtonClickedCommand}"
                     HorizontalOptions="Start"
                     Source="back.png"
                     VerticalOptions="Center"
@@ -143,10 +216,11 @@
         <CollectionView
             x:Name="MessagesView"
             Grid.Row="1"
+            
             BackgroundColor="Transparent"
             HorizontalOptions="FillAndExpand"
             ItemTemplate="{StaticResource MessageSelector}"
-            ItemsSource="{Binding Messages}"
+            ItemsSource="{Binding ChatItems}"
             
             Scrolled="OnScrolled"
             VerticalScrollBarVisibility="Always">

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace MauiMessenger.Models
 {
@@ -71,27 +72,37 @@ namespace MauiMessenger.Models
 
 
 
-    public readonly Dictionary<Guid, ObservableCollection<MessageDTO>> _messagesByChat = new();
-
+    public readonly Dictionary<Guid, ObservableCollection<ChatItem>> _chatItemsByChat = new();
+    public readonly Dictionary<Guid, List<int>> _messageIndexesByChat = new();
 
     public ChatDTO? GetChat(Guid id) => Chats.FirstOrDefault(c => c.Id == id);
 
-    public async Task<ObservableCollection<MessageDTO>> GetMessages(Guid chatId)
+    public async Task<ObservableCollection<ChatItem>> GetChatItems(Guid chatId)
     {
-      ObservableCollection<MessageDTO>? messages;
-
-      _messagesByChat.TryGetValue(chatId, out messages);
-      if (messages == null)
+      _chatItemsByChat.TryGetValue(chatId, out var items);
+      if (items == null)
       {
         await MainThread.InvokeOnMainThreadAsync(async () =>
           {
-            messages = new ObservableCollection<MessageDTO>();
-            _messagesByChat[chatId] = messages;
+            items = new ObservableCollection<ChatItem>();
+            _chatItemsByChat[chatId] = items;
           }
         );
       }
-      return messages;
+      return items;
     }
+
+    public async Task<List<int>> GetMessageIndexes(Guid chatId)
+    {
+      _messageIndexesByChat.TryGetValue(chatId, out var indexes);
+      if (indexes == null)
+      {
+        indexes = new List<int>();
+        _messageIndexesByChat[chatId] = indexes;
+      }
+      return indexes;
+    }
+
 
     public Dictionary<Guid, string> ChatTypes { get; private set; } = new();
     public Dictionary<Guid, string> MemberRoles { get; private set; } = new();
@@ -127,11 +138,21 @@ namespace MauiMessenger.Models
     {
       _api = api;
       _appState = state;
+      Chats.CollectionChanged += (a, e) =>
+      {
+        Debug.WriteLine($"[CollectionChanged] Action = {e.Action}");
+
+        if (e.OldItems != null)
+          Debug.WriteLine($"OldItems: {e.OldItems.Count}");
+        if (e.NewItems != null)
+          Debug.WriteLine($"NewItems: {e.NewItems.Count}");
+
+        foreach (var chat in Chats)
+          Debug.WriteLine($"Chat: {chat.Id}, unread={chat.UnreadMessagesCount}");
+
+        Debug.WriteLine("-----");
+      };
     }
-
-
-
-
 
 
     public async Task LoadEnumsAsync()
@@ -198,7 +219,7 @@ namespace MauiMessenger.Models
     {
       var existing = GetChat(chatId);
       var ind = Chats.IndexOf(existing);
-
+     
       var updated = await _api.ChatGETAsync(chatId, _appState.CurrentUser.UserId);
       updated.Name = existing.Name;
       await MainThread.InvokeOnMainThreadAsync(() => Chats[ind] = updated);
@@ -241,13 +262,101 @@ namespace MauiMessenger.Models
 
     }
 
+
+    public async Task<List<ChatItem>> ProcessChatItems(ChatDTO chat, ICollection<MessageDTO> messages)
+    {
+      var chatItems = new List<ChatItem>();
+      var messageItems = messages.Select(m => new MessageItem
+      {
+        Message = m,
+        CreatedAt = m.CreatedAt!.Value.DateTime
+      });
+      var serviceMessages = chat.Members.Where(m => m.AddedAt != chat.CreatedAt).OrderBy(m => m.AddedAt)
+          .Select(m => new ServiceMessageItem
+          {
+            Type = ChatItemType.ServiceMessage,
+            Text = $"{chat.CreatorUsername} добавил участника {m.Username}",
+            CreatedAt = m.AddedAt!.Value.DateTime
+          }).ToList();
+      if (chat.Type.Id != PrivateTypeId)
+      {
+        serviceMessages.Add(new ServiceMessageItem
+        {
+          CreatedAt = chat.CreatedAt!.Value.DateTime,
+          Text = $"{chat.CreatorUsername} создал чат",
+          Type = ChatItemType.ServiceMessage
+        });
+      }
+
+      chatItems.AddRange(messageItems);
+      chatItems.AddRange(serviceMessages);
+      var sorted = chatItems
+        .OfType<IHasCreatedAt>()
+        .OrderBy(x => x.CreatedAt)
+        .Cast<ChatItem>()
+        .ToList();
+
+      var unreadPosition = chatItems.IndexOf(chatItems.FirstOrDefault(i => i is MessageItem msg && msg.Message.SenderId != _appState.CurrentUser.UserId && !msg.Message.IsRead));
+
+      if (unreadPosition != -1)
+      {
+        chatItems.Insert(unreadPosition, new UnreadMarkerItem { Type = ChatItemType.UnreadMarker });
+      }
+
+      DateTime lastDaySeparator = DateTime.MinValue;
+
+      for (var i = 0; i < chatItems.Count; ++i)
+      {
+        var item = chatItems[i];
+
+        if (item is IHasCreatedAt hasDate)
+        {
+          if (lastDaySeparator.Date != hasDate.CreatedAt.Date)
+
+
+          {
+            lastDaySeparator = hasDate.CreatedAt.Date;
+            // Вставка DividerItem
+            chatItems.Insert(i, new DaySeparatorItem { Date = lastDaySeparator, Type = ChatItemType.DaySeparator });
+            i++; // чтобы пропустить вставленный элемент
+          }
+        }
+      }
+      return chatItems;
+    }
+
+    public List<int> SearchMessageIndexes(ICollection<ChatItem> items)
+    {
+      List<int> indexes = new List<int>();
+      foreach (var item in items.Index())
+      {
+        if (item.Item is MessageItem)
+        {
+          indexes.Add(item.Index);
+        }
+      }
+      return indexes;
+    }
+
     public async Task LoadMessagesAsync(Guid chatId)
     {
-      var messages = (await _api.MessagesGETAsync(chatId)).Messages;
+      var chatItems = await ProcessChatItems(GetChat(chatId)!, (await _api.MessagesGETAsync(chatId, _appState.CurrentUser.UserId)).Messages);
+      var inds = SearchMessageIndexes(chatItems);
+      ObservableCollection<ChatItem> collection = await GetChatItems(chatId);
+      var indexes = await GetMessageIndexes(chatId);
 
-      var collection = await GetMessages(chatId);
+      collection.Clear();
+      indexes.Clear();
 
-      UpdateCollection(collection, messages, (a, b) => a.Id == b.Id && a.UpdatedAt == b.UpdatedAt);
+      foreach (var item in chatItems)
+      {
+        collection.Add(item);
+      }
+      foreach (var item in inds)
+      {
+        indexes.Add(item);
+      }
+      //UpdateCollection(collection, chatItems, (a, b) => a.Id == b.Id && a.UpdatedAt == b.UpdatedAt);
 
 
     }
@@ -260,10 +369,44 @@ namespace MauiMessenger.Models
 
         await MainThread.InvokeOnMainThreadAsync(async () =>
           {
-            var msgs = (await GetMessages(message.ChatId));
-            if (msgs != null)
+            var chatItems = await GetChatItems(message.ChatId);
+            var indexes = await GetMessageIndexes(message.ChatId);
+            if (chatItems != null)
             {
-              msgs.Add(message);
+              var ind = chatItems.Count;
+              if (indexes.Count == 0 || chatItems[indexes.Last()] is IHasCreatedAt item && item.CreatedAt.ToLocalTime().Date != message.CreatedAt!.Value.ToLocalTime().Date)
+              {
+                chatItems.Insert(ind, new DaySeparatorItem { Date = message.CreatedAt!.Value.DateTime, Type = ChatItemType.DaySeparator });
+                ++ind;
+              }
+              chatItems.Insert(ind, new MessageItem
+              {
+                Message = message,
+                CreatedAt = message.CreatedAt!.Value.DateTime,
+                Type = ChatItemType.Message
+              });
+              indexes.Add(ind);
+              if (message.SenderId != _appState.CurrentUser.UserId)
+              {
+                var index = Chats.IndexOf(chat);
+                var updated = new ChatDTO
+                {
+                  Id = chat.Id,
+                  Members = chat.Members,
+                  Name = chat.Name,
+                  Type = chat.Type,
+                  LastMessage = message,
+                  UpdatedAt = message.CreatedAt,
+                  UnreadMessagesCount = chat.UnreadMessagesCount + 1,
+                  LastReadMessageId = chat.LastReadMessageId
+                };
+
+                Chats.RemoveAt(index);
+                Chats.Insert(index, updated);
+              }
+              {
+                // event messages changed
+              }
             }
             else
             {
@@ -283,14 +426,20 @@ namespace MauiMessenger.Models
       var chat = GetChat(updated.ChatId);
       if (chat != null)
       {
-        var messages = await GetMessages(updated.ChatId);
-        var existing = messages.FirstOrDefault(m => m.Id == oldId);
+        var chatItems = await GetChatItems(updated.ChatId);
+        var existing = chatItems.FirstOrDefault(m => m is MessageItem msg && msg.Message.Id == oldId);
         if (existing != null)
         {
-          var index = messages.IndexOf(existing);
+          var index = chatItems.IndexOf(existing);
           MainThread.BeginInvokeOnMainThread(async () =>
           {
-            messages[index] = updated;
+            chatItems.RemoveAt(index);
+            chatItems.Insert(index, new MessageItem
+            {
+              Message = updated,
+              CreatedAt = updated.CreatedAt!.Value.DateTime,
+              Type = ChatItemType.Message
+            });
           });
           // event messages changed
         }
@@ -327,46 +476,57 @@ namespace MauiMessenger.Models
     //}
 
 
-
+    // use to  mark sent messages as read when signal received
     public async Task MarkMessagesRead(Guid chatId, Guid userId, Guid readPositionId, DateTime readAt)
     {
-      _messagesByChat.TryGetValue(chatId, out var messages);
+      _chatItemsByChat.TryGetValue(chatId, out var chatItems);
 
       await MainThread.InvokeOnMainThreadAsync(() =>
       {
-        for (var i = 0; i < messages.Count; i++)
+        var readPosition = chatItems.Select((item, index) => (item, index))
+        .FirstOrDefault(m => m.item is MessageItem msg && msg.Message.Id == readPositionId)!.index;
+        for (var i = 0; i <= readPosition; i++)
         {
 
-          var old = messages[i];
-
-          messages[i] = new MessageDTO
+          if (chatItems[i] is MessageItem msg)
           {
-            Id = old.Id,
-            ChatId = old.ChatId,
-            SenderId = old.SenderId,
-            Content = old.Content,
-            CreatedAt = old.CreatedAt,
-            Username = old.Username,
-            UpdatedAt = old.UpdatedAt,
-            IsRead = true,
-            ReadByCount = old.ReadByCount + 1
-          };
+            var old = msg.Message;
+            chatItems.RemoveAt(i);
+            chatItems.Insert(i, new MessageItem
+            {
+              Message = new MessageDTO
+              {
+                Id = old.Id,
+                ChatId = old.ChatId,
+                SenderId = old.SenderId,
+                Content = old.Content,
+                CreatedAt = old.CreatedAt,
+                Username = old.Username,
+                UpdatedAt = old.UpdatedAt,
+                IsRead = true,
+                ReadByCount = old.ReadByCount + 1
+              },
+              CreatedAt = old.CreatedAt!.Value.DateTime,
+              Type = ChatItemType.Message
+            });
+          }
         }
-      }
+      });
     }
-    // try to use when chat closed or scroll ended
+
+    // use to update received message statuses when chat closed
     public async Task<int> UpdateMessageReadStatuses(Guid chatId, Guid oldReadPositionMessageId, Guid newReadPositionMessageId)
     {
       // Attention! work only when messages update before chat
 
-      if (!_messagesByChat.TryGetValue(chatId, out var messages) || messages == null) return 0;
+      if (!_chatItemsByChat.TryGetValue(chatId, out var chatItems) || chatItems == null) return 0;
 
-      var prevPosition = messages.Select((item, index) => (item, index))
-        .FirstOrDefault(m => m.item.Id == oldReadPositionMessageId);
+      var prevPosition = chatItems.Select((item, index) => (item, index))
+        .FirstOrDefault(m => m.item is MessageItem msg && msg.Message.Id == oldReadPositionMessageId);
       int prevPositionIndex = prevPosition != default ? prevPosition.index : 0;
 
-      var newPosition = messages.Select((item, index) => (item, index))
-        .FirstOrDefault(m => m.item.Id == newReadPositionMessageId);
+      var newPosition = chatItems.Select((item, index) => (item, index))
+        .FirstOrDefault(m => m.item is MessageItem msg && msg.Message.Id == newReadPositionMessageId);
       int newPositionIndex = newPosition != default ? newPosition.index : prevPositionIndex;
 
       if (newPositionIndex < prevPositionIndex) return 0;
@@ -374,27 +534,36 @@ namespace MauiMessenger.Models
       {
         for (var i = prevPositionIndex; i <= newPositionIndex; ++i)
         {
-          var old = messages[i];
-          // Копируем все поля кроме IsRead и ReadByCount — им присваиваем новые значения
-
-          messages[i] = new MessageDTO
+          if (chatItems[i] is MessageItem msg)
           {
-            Id = old.Id,
-            ChatId = old.ChatId,
-            SenderId = old.SenderId,
-            Content = old.Content,
-            CreatedAt = old.CreatedAt,
-            Username = old.Username,
-            UpdatedAt = old.UpdatedAt,
-            IsRead = true,
-            ReadByCount = old.ReadByCount + 1
-          };
+            var old = msg.Message;
+            // Копируем все поля кроме IsRead и ReadByCount — им присваиваем новые значения
+
+            chatItems[i] = new MessageItem
+            {
+              Message = new MessageDTO
+              {
+                Id = old.Id,
+                ChatId = old.ChatId,
+                SenderId = old.SenderId,
+                Content = old.Content,
+                CreatedAt = old.CreatedAt,
+                Username = old.Username,
+                UpdatedAt = old.UpdatedAt,
+                IsRead = true,
+                ReadByCount = old.ReadByCount + 1
+              },
+              CreatedAt = old.CreatedAt!.Value.DateTime,
+              Type = ChatItemType.Message
+            };
+          }
         }
       });
       return newPositionIndex - prevPositionIndex + 1;
     }
 
 
+    // use to update current users chat read position when chat closed
     public async Task UpdateChatReadPosition(Guid chatId, Guid lastReadMessageId, int updatedMessagesCount)
     {
       var chat = GetChat(chatId);

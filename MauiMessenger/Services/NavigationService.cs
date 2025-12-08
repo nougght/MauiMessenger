@@ -14,14 +14,15 @@ namespace MauiMessenger.Services
   public static class NavigationService
   {
 
-    public static async Task GoToChatAsync(ChatDTO chat, ObservableCollection<MessageDTO> messages)
+    public static async Task GoToChatAsync(ChatDTO chat, ObservableCollection<ChatItem> chatItems, List<int> indexes)
     {
 
       var chatVm = Ioc.Default.GetRequiredService<ChatViewModel>();
       await MainThread.InvokeOnMainThreadAsync(() =>
       {
         chatVm.Chat = chat;
-        chatVm.Messages = messages;
+        chatVm.ChatItems = chatItems;
+        chatVm.Indexes = indexes;
         chatVm.LastReadMessageId = chat.LastReadMessageId;
       });
 

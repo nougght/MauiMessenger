@@ -24,13 +24,15 @@ namespace MauiMessenger.ViewModels
     [ObservableProperty]
     private ChatDTO chat;
 
-    public ObservableCollection<MessageDTO> Messages { get; set; } = new();
+    public ObservableCollection<ChatItem> ChatItems { get; set; } = new();
+    public List<int> Indexes { get; set; } = new();
 
     [ObservableProperty]
     private string message;
 
     public Command ChatHeaderClickedCommand { get; }
     public Command SendMessageCommand { get; }
+    public Command BackButtonClickedCommand { get; }
 
     public UserDTO User { get => _appState.CurrentUser; }
 
@@ -39,7 +41,7 @@ namespace MauiMessenger.ViewModels
 
     public event Action MessageSent;
 
-    public event Action<Guid, Guid> ChatClosed;
+    public event Action<Guid, Guid?> ChatClosed;
 
 
     public ChatViewModel(SignalRService signalR, Client apiClient, ChatService chatService,
@@ -64,8 +66,15 @@ namespace MauiMessenger.ViewModels
         //await _data.UpdateChatAsync(chat.Id);
       });
 
+      BackButtonClickedCommand = new Command(async () =>
+      {
+        ChatClosed?.Invoke(Chat.Id, LastReadMessageId);
+        await Shell.Current.Navigation.PopModalAsync();
+      });
+
       ChatClosed += async (chatId, lastReadMessageId) => { await _chatService.OnChatClosed(chatId, lastReadMessageId); };
     }
+
 
 
     //public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -99,35 +108,56 @@ namespace MauiMessenger.ViewModels
 
     public int GetReadPosition()
     {
-      return Messages.IndexOf(Messages.FirstOrDefault(m => m.Id == chat.LastReadMessageId)) + 1;
+      var ind = ChatItems.OfType<MessageItem>().ToList().IndexOf(ChatItems.OfType<MessageItem>().FirstOrDefault(m => m.Message.Id == chat.LastReadMessageId));
+      return ind == -1 ? ind : Indexes[ind] + 1;
     }
+
+    private CancellationTokenSource? _readPositionCts;
+    private int _lastReadMessageIndex = -1; // индекс последнего прочитанного в Indexes (только сообщения)
 
     public async Task OnVisibleRangeChanged(int firstItem, int lastItem, DateTime readAt)
     {
-      if (lastItem >= Messages.Count)
+      if (_readPositionCts != null)
       {
-        lastItem = Messages.Count - 1;
+        _readPositionCts.Cancel();
+        _readPositionCts.Dispose();
       }
+      _readPositionCts = new CancellationTokenSource();
+      var token = _readPositionCts.Token;
 
-      var lastMessage = Messages[lastItem];
-     ///* if (!lastMessage.IsRead)
-     // {
-     //   //_data.UpdateChatReadPosition(chat.Id, lastMessage.Id);
-     //   //await Task.Delay(300);
-
-     // }*/
-
-      var i = firstItem;
-      while (i <= lastItem && (Messages[i].IsRead || Messages[i].SenderId == _appState.CurrentUser.UserId))
+      try
       {
-        ++i;
+        await Task.Delay(300, token); // Debounce
       }
-      if (i <= lastItem)
-      {
+      catch (TaskCanceledException) { return; }
 
-        await _chatService.UpdateChatReadPosition(Chat.Id, lastMessage.Id, readAt);
-      }
+      // Ограничиваем lastItem индексом Indexes
+      if (lastItem >= Indexes.Count) lastItem = Indexes.Count - 1;
+      if (lastItem < 0) return;
+
+      // Находим последнее сообщение среди видимых
+      var indTuple = Indexes
+          .Select((msgIndex, msgListIndex) => (msgIndex, msgListIndex));
+      var lastMessageTuple = indTuple
+          .LastOrDefault(t => t.msgListIndex <= lastItem);
+
+      if (lastMessageTuple.msgListIndex == 0 && Indexes.Count > 0 && _lastReadMessageIndex >= lastMessageTuple.msgListIndex)
+        return; // ничего нового
+
+      if (lastMessageTuple.msgListIndex <= _lastReadMessageIndex)
+        return; // пользователь прокрутил уже прочитанные
+
+      // Обновляем позицию
+      _lastReadMessageIndex = lastMessageTuple.msgListIndex;
+      var lastMessage = ChatItems[Indexes[_lastReadMessageIndex]] as MessageItem;
+      if (lastMessage == null) return;
+
+      LastReadMessageId = lastMessage.Message.Id;
+      await _chatService.UpdateChatReadPosition(Chat.Id, lastMessage.Message.Id, readAt);
     }
+
+
+
 
 
     private async Task OnChatHeaderClicked(ChatDTO chat)

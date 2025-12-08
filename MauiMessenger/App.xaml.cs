@@ -13,6 +13,14 @@ namespace MauiMessenger
 
       TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
+
+
+      //App.Current.Dispatcher.UnhandledException += (sender, e) =>
+      //{
+      //  File.WriteAllText("crash_ui.txt", e.Exception.ToString());
+      //  e.Handled = true;
+      //};
+
       InitializeComponent();
 
       var mainVM = services.GetService<MainViewModel>();
@@ -35,10 +43,12 @@ namespace MauiMessenger
     private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
       var ex = e.ExceptionObject as Exception;
+      File.WriteAllText("crash_unhandled.txt", e.ExceptionObject.ToString());
       ShowError(ex);
     }
     private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
+      File.WriteAllText("crash_task.txt", e.Exception.ToString());
       ShowError(e.Exception);
       e.SetObserved();
     }

@@ -61,7 +61,7 @@ namespace MauiMessenger.ViewModels
       var chat = _chatService.GetChat(chatId);
       await _chatService.LoadMessagesAsync(chatId);
       IsBusy = false;
-      await NavigationService.GoToChatAsync(chat, await _chatService.GetMessages(chat.Id));
+      await NavigationService.GoToChatAsync(chat, await _chatService.GetChatItems(chat.Id), await _chatService.GetMessageIndexes(chat.Id));
       // go to chat page
 
     }

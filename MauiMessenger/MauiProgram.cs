@@ -58,9 +58,8 @@ namespace MauiMessenger
       builder.Services.AddTransient<SearchViewModel>();
       builder.Services.AddTransient<UserPageViewModel>();
 
-#if DEBUG
       builder.Logging.AddDebug();
-#endif
+      //builder.Logging.add
       var app = builder.Build();
 
       // 🧠 Важно: подключаем DI к CommunityToolkit
