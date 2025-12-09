@@ -97,7 +97,7 @@
       "templateDirectory": null,
       "serviceHost": null,
       "serviceSchemes": null,
-      "output": "Models.cs",
+      "output": "DTOs.cs",
       "newLineBehavior": "Auto"
     }
   }

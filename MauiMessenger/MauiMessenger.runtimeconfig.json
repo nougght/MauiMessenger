@@ -1,0 +1,8 @@
+{
+  "runtimeOptions": {
+    "configProperties": {
+      "Microsoft.Extensions.Logging.Console": true,
+      "System.Diagnostics.DefaultListeners": true
+    }
+  }
+}
