@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using MauiMessenger.Services;
 using MauiMessenger.Models;
+using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.ViewModels
 {

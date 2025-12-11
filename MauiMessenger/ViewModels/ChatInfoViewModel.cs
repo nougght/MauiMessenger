@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using MauiMessenger.Models;
 using MauiMessenger.Services;
 
+using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.ViewModels
 {

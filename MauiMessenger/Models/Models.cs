@@ -43,4 +43,9 @@ namespace MauiMessenger.Models
     public DateTime CreatedAt { get; set; }
   }
 
+  public partial class MessageFileDTO
+  {
+    public string URL { get; set; }
+
+  }
 }

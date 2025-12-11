@@ -11,6 +11,7 @@
   "codeGenerators": {
     "openApiToCSharpClient": {
       "generateClientClasses": true,
+      "useSingleClient": true,
       "suppressClientClassesOutput": false,
       "generateClientInterfaces": false,
       "suppressClientInterfacesOutput": false,
@@ -43,7 +44,7 @@
       "serializeTypeInformation": false,
       "queryNullValue": "",
       "className": "{controller}Client",
-      "operationGenerationMode": "MultipleClientsFromOperationId",
+      "operationGenerationMode": "SingleClientFromOperationId",
       "includedOperationIds": [],
       "excludedOperationIds": [],
       "additionalNamespaceUsages": [],
@@ -59,7 +60,7 @@
       "wrapResponseMethods": [],
       "generateResponseClasses": true,
       "responseClass": "SwaggerResponse",
-      "namespace": "MauiMessenger.Services",
+      "namespace": "MauiMessenger.ApiClient",
       "requiredPropertiesMustBeDefined": false,
       "dateType": "System.DateTimeOffset",
       "jsonConverters": null,

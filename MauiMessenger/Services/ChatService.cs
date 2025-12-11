@@ -8,7 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
+using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.Services
 {
@@ -30,8 +30,8 @@ namespace MauiMessenger.Services
       _appState = appState;
     }
 
-    
-    public async Task SendMessageAsync(Guid chatId, string text)
+
+    public async Task SendMessageAsync(Guid chatId, string text, List<FileResult> files)
     {
       try
       {
@@ -43,7 +43,9 @@ namespace MauiMessenger.Services
           Content = text,
           CreatedAt = DateTime.Now,
           Username = _appState.CurrentUser.Username,
+          Files = files.Select(f => new MessageFileDTO { FileKey = "", FileName = "file", Id = Guid.NewGuid() }).ToList()
         };
+
 
         // add temporary object for ui 
 
@@ -57,13 +59,39 @@ namespace MauiMessenger.Services
 
         var msg = new CreateMessageRequest
         {
-          Message = text,
+          Message = text ,
           ChatId = chatId,
           UserId = _appState.CurrentUser.UserId
         };
 
         // api request
         var response = await _api.MessagesPOSTAsync(msg);
+        response.Files = new List<MessageFileDTO>();
+    var streams = new List<Stream>();
+        for (var i = 0; i < files.Count; i++)
+        {
+          if (files[i] != null)
+          {
+            streams.Add(await files[i].OpenReadAsync());
+            long size = streams[i].Length;
+            var fileResp = await _api.PresignedUrlPOSTAsync(new PostFileRequest { MessageId = response.Id, FileName = files[i].FileName, FileType = files[i].ContentType, Size = size });
+            
+
+            // uploading file to s3
+            using (var httpClient = new HttpClient())
+            {
+              var putRequest = new HttpRequestMessage(HttpMethod.Put, fileResp.PutUrl)
+              {
+                Content = new StreamContent(streams[i])
+              };
+              putRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(files[i].ContentType);
+              var putResponse = await httpClient.SendAsync(putRequest);
+              putResponse.EnsureSuccessStatusCode();
+            }
+            fileResp.File.URL = await _api.PresignedUrlGETAsync(fileResp.File.FileKey);
+            response.Files.Add(fileResp.File);
+          }
+        }
         // replacing temporary object
 
         MainThread.BeginInvokeOnMainThread(async () =>
@@ -89,12 +117,12 @@ namespace MauiMessenger.Services
     public ChatDTO? GetChat(Guid chatId) => _data.GetChat(chatId);
     public ObservableCollection<ChatDTO> GetChats() => _data.Chats;
     public async Task<ObservableCollection<ChatItem>> GetChatItems(Guid chatId) => await _data.GetChatItems(chatId);
-    public async Task<List<int>> GetMessageIndexes(Guid chatId) =>  await _data.GetMessageIndexes(chatId);
+    public async Task<List<int>> GetMessageIndexes(Guid chatId) => await _data.GetMessageIndexes(chatId);
 
     public ObservableCollection<ContactDTO> GetContacts() => _data.Contacts;
     public async Task LoadMessagesAsync(Guid chatId) => await _data.LoadMessagesAsync(chatId);
 
-    public Guid MemberTypeId { get => _data.MemberTypeId;}
+    public Guid MemberTypeId { get => _data.MemberTypeId; }
     public Guid AdminTypeId { get => _data.AdminTypeId; }
     public Guid OwnerTypeId { get => _data.OwnerTypeId; }
 
@@ -104,12 +132,12 @@ namespace MauiMessenger.Services
 
     public async Task<ChatDTO> GetOrCreateChatAsync(Guid userId)
     {
-        var chat = _data.GetChatWithUser(userId);
-        if (chat == null)
-        {
-          chat = await CreatePrivateChat(userId);
-        }
-        return chat;
+      var chat = _data.GetChatWithUser(userId);
+      if (chat == null)
+      {
+        chat = await CreatePrivateChat(userId);
+      }
+      return chat;
     }
 
 
@@ -147,7 +175,7 @@ namespace MauiMessenger.Services
 
     public async Task<ChatDTO> CreateGroupChat(IEnumerable<UserDTO> users, string name)
     {
-      
+
       var members = users.Select(u => new CreateMemberRequest { UserId = u.UserId, Role = _data.MemberTypeId }).ToList();
       members.Add(new CreateMemberRequest { UserId = _appState.CurrentUser.UserId, Role = _data.OwnerTypeId });
 
@@ -167,7 +195,7 @@ namespace MauiMessenger.Services
       await _signalR.NotifyChatCreated(chat.Id);
       return chat;
     }
-    
+
     public async Task MarkMessagesRead(Guid chatId, Guid userId, Guid readPositionId, DateTime readAt)
     {
       await _data.MarkMessagesRead(chatId, userId, readPositionId, readAt);
@@ -187,7 +215,7 @@ namespace MauiMessenger.Services
           });
         await _signalR.UpdateChatReadPosition(chatId, _appState.CurrentUser.UserId, newReadPositionId, lastReadAt);
       }
-      catch(Exception ex)
+      catch (Exception ex)
       {
         throw;
       }
@@ -208,7 +236,7 @@ namespace MauiMessenger.Services
       await MainThread.InvokeOnMainThreadAsync(async () =>
       {
         // updating local chat read position
-        var chat =GetChat(chatId);
+        var chat = GetChat(chatId);
         var oldReadPositionId = chat.Id;
 
         var updatedCount = await _data.UpdateMessageReadStatuses(chatId, oldReadPositionId, lastReadMessageId!.Value);

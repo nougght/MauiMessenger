@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MauiMessenger.Models;
+using MauiMessenger.ApiClient;
 
 
 namespace MauiMessenger.Services

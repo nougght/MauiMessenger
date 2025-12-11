@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.Models
 {
@@ -276,7 +277,7 @@ namespace MauiMessenger.Models
           {
             Type = ChatItemType.ServiceMessage,
             Text = $"{chat.CreatorUsername} добавил участника {m.Username}",
-            CreatedAt = m.AddedAt!.Value.DateTime
+            CreatedAt = m.AddedAt.DateTime
           }).ToList();
       if (chat.Type.Id != PrivateTypeId)
       {

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using MauiMessenger.Models;
 using MauiMessenger.Services;
 using System.Runtime.CompilerServices;
+using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.ViewModels
 {

@@ -2,6 +2,8 @@
 using CommunityToolkit.Mvvm.DependencyInjection;
 using MauiMessenger.Models;
 using MauiMessenger.Services;
+using MauiMessenger.ApiClient;
+
 using MauiMessenger.ViewModels;
 using MauiMessenger.Views;
 using Microsoft.Extensions.Configuration;

@@ -3,10 +3,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Maui.Storage;
 
 namespace MauiMessenger.Services
 {
-  internal class FileService
+  public class FileService
   {
+
+    public static async Task<List<FileResult>> PickFileAsync()
+    {
+      try
+      {
+        var res = await FilePicker.Default.PickMultipleAsync(
+          new PickOptions
+          {
+            PickerTitle = "Выберите файл(ы)",
+            FileTypes = FilePickerFileType.Images
+          });
+        return res.ToList();
+      }
+      catch (Exception ex)
+      {
+        throw;
+      }
+    }
   }
 }

@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.ViewModels
 {
@@ -30,7 +31,10 @@ namespace MauiMessenger.ViewModels
     [ObservableProperty]
     private string message;
 
+    public ObservableCollection<FileResult> Files { get; set; } = new();
+
     public Command ChatHeaderClickedCommand { get; }
+    public Command PickFileCommand { get; }
     public Command SendMessageCommand { get; }
     public Command BackButtonClickedCommand { get; }
 
@@ -51,6 +55,7 @@ namespace MauiMessenger.ViewModels
       _data = data;
       _appState = state;
       _chatService = chatService;
+
       //foreach (var message in Messages)
       //{
       //  ;
@@ -58,9 +63,13 @@ namespace MauiMessenger.ViewModels
       //}
 
       ChatHeaderClickedCommand = new Command(async () => await OnChatHeaderClicked(chat), () => true);
+      PickFileCommand = new Command(async () =>
+      {
+        await OnPickFileAsync();
+      });
       SendMessageCommand = new Command(async () =>
       {
-        await _chatService.SendMessageAsync(chat.Id, this.Message);
+        await _chatService.SendMessageAsync(chat.Id, this.Message, this.Files.ToList());
         Message = "";
         MessageSent?.Invoke();
         //await _data.UpdateChatAsync(chat.Id);
@@ -135,6 +144,15 @@ namespace MauiMessenger.ViewModels
       if (lastItem >= Indexes.Count) lastItem = Indexes.Count - 1;
       if (lastItem < 0) return;
 
+      var i = firstItem;
+      while (i <= lastItem && (!(ChatItems[i] is MessageItem msg) || msg.Message.SenderId == _appState.CurrentUser.UserId))
+      {
+        ++i;
+      }
+      if (i > lastItem)
+      {
+        return;
+      }
       // Находим последнее сообщение среди видимых
       var indTuple = Indexes
           .Select((msgIndex, msgListIndex) => (msgIndex, msgListIndex));
@@ -158,6 +176,18 @@ namespace MauiMessenger.ViewModels
 
 
 
+
+    private async Task OnPickFileAsync()
+    {
+      var res = await FileService.PickFileAsync();
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        foreach (var file in res)
+        {
+          Files.Add(file);
+        }
+      });
+    }
 
 
     private async Task OnChatHeaderClicked(ChatDTO chat)

@@ -7,7 +7,7 @@
     Title="ChatPage">
     <ContentPage.Resources>
         <DataTemplate x:Key="IncomingMessageTemplate">
-            <Grid ColumnDefinitions="Auto, *" HorizontalOptions="FillAndExpand">
+            <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto" HorizontalOptions="FillAndExpand">
 
                 <Grid.Behaviors>
                     <local:VisibleBehavior />
@@ -15,6 +15,7 @@
                 <!--  Имя отправителя  -->
                 <Label
                     Grid.Column="0"
+                    Grid.Row="0"
                     Margin="10,0"
                     FontAttributes="Bold"
                     FontSize="24"
@@ -23,6 +24,7 @@
                 <!--  Сообщение  -->
                 <Border
                     Grid.Column="1"
+                    Grid.Row="0"
                     Margin="10,5"
                     Padding="10"
                     BackgroundColor="#308f8f8f"
@@ -47,13 +49,29 @@
                             VerticalOptions="End" />
                     </HorizontalStackLayout>
                 </Border>
-                
+                <CollectionView ItemsSource="{Binding Files}" 
+                    ItemsLayout="VerticalList"
+                    SelectionMode="None"
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid> 
+                                <Image IsVisible="{Binding IsImage}" Source="{Binding URL} " />
+                                <!--<MediaElement IsVisible="{Binding IsVideo}" Source="{Binding MinIOUrl}" AutoPlay="False"/>-->
+                                <Button IsVisible="{Binding IsOtherFile}" Text="{Binding FileName}" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
             </Grid>
         </DataTemplate>
 
 
         <DataTemplate x:Key="OutgoingMessageTemplate">
-            <Grid HorizontalOptions="FillAndExpand">
+            <Grid HorizontalOptions="FillAndExpand"
+                  RowDefinitions="Auto, Auto">
                 <Border
                     Margin="10,5,10,5"
                     Padding="10"
@@ -84,6 +102,22 @@
                             VerticalOptions="End" />
                     </HorizontalStackLayout>
                 </Border>
+                <CollectionView ItemsSource="{Binding Message.Files}" 
+                    ItemsLayout="VerticalList"
+                    SelectionMode="None"
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Image  Source="{Binding URL} " />
+                                <!--<MediaElement IsVisible="{Binding IsVideo}" Source="{Binding MinIOUrl}" AutoPlay="False"/>-->
+                                <!--<Button IsVisible="{Binding IsOtherFile}" Text="{Binding FileName}" />-->
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
             </Grid>
         </DataTemplate>
 
@@ -232,9 +266,35 @@
 
         <!--  Панель ввода сообщения  -->
 
-        <Grid Grid.Row="2" ColumnDefinitions="*, Auto">
+        <Grid Grid.Row="2" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+            <CollectionView ItemsSource="{Binding Files}" 
+                    SelectionMode="None"
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    
+                    Margin="10"
+                    BackgroundColor="Grey"
+                HorizontalScrollBarVisibility="Always"
+                    >
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="20"/>
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    
+                    <DataTemplate>
+                        <Border
+                            WidthRequest="40"
+                            HeightRequest="40"
+                            BackgroundColor="Purple"
+                            Margin="20"
+                            />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
             <Editor
                 Grid.Column="0"
+                Grid.Row="1"
                 AutoSize="TextChanges"
                 FontSize="30"
                 HorizontalOptions="FillAndExpand"
@@ -243,6 +303,20 @@
             <!--  TextChanged="{Binding EditorText_Changed}"  -->
             <ImageButton
                 Grid.Column="1"
+                Grid.Row="1"
+                Margin="10"
+                Aspect="AspectFit"
+                BackgroundColor="Transparent"
+                Command="{Binding PickFileCommand}"
+                HeightRequest="40"
+                HorizontalOptions="End"
+                IsEnabled="True"
+                Source="add_file.png"
+                VerticalOptions="End"
+                WidthRequest="40" />
+            <ImageButton
+                Grid.Column="2"
+                Grid.Row="1"
                 Margin="10"
                 Aspect="AspectFit"
                 BackgroundColor="Transparent"
