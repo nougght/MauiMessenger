@@ -220,7 +220,7 @@ namespace MauiMessenger.Models
     {
       var existing = GetChat(chatId);
       var ind = Chats.IndexOf(existing);
-     
+
       var updated = await _api.ChatGETAsync(chatId, _appState.CurrentUser.UserId);
       updated.Name = existing.Name;
       await MainThread.InvokeOnMainThreadAsync(() => Chats[ind] = updated);
@@ -341,26 +341,41 @@ namespace MauiMessenger.Models
 
     public async Task LoadMessagesAsync(Guid chatId)
     {
-      var chatItems = await ProcessChatItems(GetChat(chatId)!, (await _api.MessagesGETAsync(chatId, _appState.CurrentUser.UserId)).Messages);
-      var inds = SearchMessageIndexes(chatItems);
-      ObservableCollection<ChatItem> collection = await GetChatItems(chatId);
-      var indexes = await GetMessageIndexes(chatId);
-
-      collection.Clear();
-      indexes.Clear();
-
-      foreach (var item in chatItems)
+      var response = (await _api.MessagesGETAsync(chatId, _appState.CurrentUser.UserId)).Messages;
+      //response.Files = new List<MessageFileDTO>();
+      foreach (var msg in response)
       {
-        collection.Add(item);
+        foreach (var file in msg.Files)
+        {
+          var url = await _api.PresignedUrlGETAsync(file.FileKey);
+          file.URL = url;
+
+        }
+
       }
-      foreach (var item in inds)
-      {
-        indexes.Add(item);
-      }
-      //UpdateCollection(collection, chatItems, (a, b) => a.Id == b.Id && a.UpdatedAt == b.UpdatedAt);
+        var chatItems = await ProcessChatItems(GetChat(chatId)!, response);
 
 
-    }
+
+        var inds = SearchMessageIndexes(chatItems);
+        ObservableCollection<ChatItem> collection = await GetChatItems(chatId);
+        var indexes = await GetMessageIndexes(chatId);
+
+        collection.Clear();
+        indexes.Clear();
+
+        foreach (var item in chatItems)
+        {
+          collection.Add(item);
+        }
+        foreach (var item in inds)
+        {
+          indexes.Add(item);
+        }
+        //UpdateCollection(collection, chatItems, (a, b) => a.Id == b.Id && a.UpdatedAt == b.UpdatedAt);
+
+
+      }
 
     public async Task AddMessage(MessageDTO message)
     {

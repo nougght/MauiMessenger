@@ -44,8 +44,15 @@ namespace MauiMessenger.ViewModels
       {
         if (message.SenderId != _appState.CurrentUser.UserId)
         {
-          
+
+          foreach (var file in message.Files)
+          {
+            var url = await _api.PresignedUrlGETAsync(file.FileKey);
+            file.URL = url;
+
+          }
           await _data.AddMessage(message);
+
           //await _data.UpdateChatAsync(message.ChatId);
         }
       };

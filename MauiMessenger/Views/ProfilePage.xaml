@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="MauiMessenger.Views.ProfilePage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Title="ProfilePage">
+    <Grid BackgroundColor="Transparent" RowDefinitions="60, Auto, Auto">
+        <ImageButton
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="10"
+            Aspect="AspectFill"
+            BackgroundColor="Transparent"
+            Command="{Binding BackButtonClickedCommand}"
+            HorizontalOptions="Start"
+            Source="back.png"
+            VerticalOptions="Center"
+            WidthRequest="40" />
+
+        <Grid
+            Grid.Row="1"
+            Grid.Column="0"
+            Margin="10,10"
+            ColumnDefinitions="Auto, Auto"
+            HorizontalOptions="Center"
+            RowDefinitions="200, Auto"
+            VerticalOptions="Center">
+
+            <Border
+                Grid.Row="0"
+                Grid.Column="0"
+                Margin="10"
+                HorizontalOptions="Center"
+                StrokeShape="RoundRectangle 100, 100, 100, 100"
+                StrokeThickness="0"
+                VerticalOptions="Center">
+                <Image
+                    Grid.Row="0"
+                    Aspect="AspectFit"
+                    HorizontalOptions="Center"
+                    Source="image.png"
+                    VerticalOptions="Start" />
+            </Border>
+            <ImageButton
+                Grid.Row="0"
+                Grid.Column="1"
+                Margin="10"
+                Aspect="AspectFill"
+                BackgroundColor="Transparent"
+                Command="{Binding AvatarChangeClickedCommand}"
+                HorizontalOptions="Start"
+                Source="changeAvatar.png"
+                VerticalOptions="Center"
+                WidthRequest="40" />
+
+            <Label
+                Grid.Row="1"
+                FontSize="30"
+                HorizontalOptions="Center"
+                Text="{Binding User.Name}"
+                VerticalOptions="End" />
+            <ImageButton
+                Grid.Row="1"
+                Grid.Column="1"
+                Margin="10"
+                Aspect="AspectFill"
+                BackgroundColor="Transparent"
+                Command="{Binding NicknameChangeClickedCommand}"
+                HorizontalOptions="Start"
+                Source="back.png"
+                VerticalOptions="Center"
+                WidthRequest="40" />
+
+
+        </Grid>
+    </Grid>
+</ContentPage>
