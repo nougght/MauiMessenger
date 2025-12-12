@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Maui;
 using CommunityToolkit.Mvvm.DependencyInjection;
+using CommunityToolkit.Maui.Media;
 using MauiMessenger.Models;
 using MauiMessenger.Services;
 using MauiMessenger.ApiClient;
