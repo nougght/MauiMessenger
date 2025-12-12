@@ -1,13 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.DependencyInjection;
 using MauiMessenger.Models;
+using MauiMessenger.ViewModels;
 using MauiMessenger.Views;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MauiMessenger.ViewModels;
-using System.Collections.ObjectModel;
+
 
 namespace MauiMessenger.Services
 {
@@ -24,6 +25,7 @@ namespace MauiMessenger.Services
         chatVm.ChatItems = chatItems;
         chatVm.Indexes = indexes;
         chatVm.LastReadMessageId = chat.LastReadMessageId;
+        chatVm.LastReadMessageIndex = chatItems.IndexOf(chatItems.FirstOrDefault(x => x is MessageItem msg && msg.Message.Id == chat.LastReadMessageId));
       });
 
       var page = new ChatPage(chatVm);

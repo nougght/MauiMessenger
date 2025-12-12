@@ -48,6 +48,8 @@ namespace MauiMessenger.ViewModels
     public event Action<Guid, Guid?> ChatClosed;
 
 
+    public int LastReadMessageIndex; // индекс последнего прочитанного в Indexes (только сообщения)
+
     public ChatViewModel(SignalRService signalR, Client apiClient, ChatService chatService,
   AppStateService state, DataRepository data)
     {
@@ -61,6 +63,7 @@ namespace MauiMessenger.ViewModels
       //  ;
 
       //}
+
 
       ChatHeaderClickedCommand = new Command(async () => await OnChatHeaderClicked(chat), () => true);
       PickFileCommand = new Command(async () =>
@@ -122,56 +125,64 @@ namespace MauiMessenger.ViewModels
     }
 
     private CancellationTokenSource? _readPositionCts;
-    private int _lastReadMessageIndex = -1; // индекс последнего прочитанного в Indexes (только сообщения)
 
     public async Task OnVisibleRangeChanged(int firstItem, int lastItem, DateTime readAt)
     {
-      if (_readPositionCts != null)
-      {
-        _readPositionCts.Cancel();
-        _readPositionCts.Dispose();
-      }
-      _readPositionCts = new CancellationTokenSource();
-      var token = _readPositionCts.Token;
-
       try
       {
-        await Task.Delay(300, token); // Debounce
+
+
+        if (_readPositionCts != null)
+        {
+          _readPositionCts.Cancel();
+          _readPositionCts.Dispose();
+        }
+        _readPositionCts = new CancellationTokenSource();
+        var token = _readPositionCts.Token;
+
+        try
+        {
+          await Task.Delay(300, token); // Debounce
+        }
+        catch (TaskCanceledException) { return; }
+
+        // Ограничиваем lastItem индексом Indexes
+        if (lastItem >= ChatItems.Count) lastItem = ChatItems.Count - 1;
+        if (lastItem < 0) return;
+
+        var i = LastReadMessageIndex == -1 ? 0 : LastReadMessageIndex;
+        while (i <= lastItem && (!(ChatItems[i] is MessageItem msg) || msg.Message.SenderId == _appState.CurrentUser.UserId))
+        {
+          ++i;
+        }
+        if (i > lastItem)
+        {
+          return;
+        }
+        // Находим последнее сообщение среди видимых
+        var indTuple = Indexes
+            .Select((msgIndex, msgListIndex) => (msgIndex, msgListIndex));
+        var lastMessageTuple = indTuple
+            .LastOrDefault(t => t.msgListIndex <= lastItem);
+
+        if (lastMessageTuple.msgListIndex == 0 && Indexes.Count > 0 && LastReadMessageIndex >= lastMessageTuple.msgListIndex)
+          return; // ничего нового
+
+        if (lastMessageTuple.msgListIndex <= LastReadMessageIndex)
+          return; // пользователь прокрутил уже прочитанные
+
+        // Обновляем позицию
+        LastReadMessageIndex = lastMessageTuple.msgListIndex;
+        var lastMessage = ChatItems[Indexes[LastReadMessageIndex]] as MessageItem;
+        if (lastMessage == null) return;
+
+        LastReadMessageId = lastMessage.Message.Id;
+        await _chatService.UpdateChatReadPosition(Chat.Id, lastMessage.Message.Id, readAt);
       }
-      catch (TaskCanceledException) { return; }
-
-      // Ограничиваем lastItem индексом Indexes
-      if (lastItem >= Indexes.Count) lastItem = Indexes.Count - 1;
-      if (lastItem < 0) return;
-
-      var i = firstItem;
-      while (i <= lastItem && (!(ChatItems[i] is MessageItem msg) || msg.Message.SenderId == _appState.CurrentUser.UserId))
+      catch (Exception ex)
       {
-        ++i;
+        throw;
       }
-      if (i > lastItem)
-      {
-        return;
-      }
-      // Находим последнее сообщение среди видимых
-      var indTuple = Indexes
-          .Select((msgIndex, msgListIndex) => (msgIndex, msgListIndex));
-      var lastMessageTuple = indTuple
-          .LastOrDefault(t => t.msgListIndex <= lastItem);
-
-      if (lastMessageTuple.msgListIndex == 0 && Indexes.Count > 0 && _lastReadMessageIndex >= lastMessageTuple.msgListIndex)
-        return; // ничего нового
-
-      if (lastMessageTuple.msgListIndex <= _lastReadMessageIndex)
-        return; // пользователь прокрутил уже прочитанные
-
-      // Обновляем позицию
-      _lastReadMessageIndex = lastMessageTuple.msgListIndex;
-      var lastMessage = ChatItems[Indexes[_lastReadMessageIndex]] as MessageItem;
-      if (lastMessage == null) return;
-
-      LastReadMessageId = lastMessage.Message.Id;
-      await _chatService.UpdateChatReadPosition(Chat.Id, lastMessage.Message.Id, readAt);
     }
 
 

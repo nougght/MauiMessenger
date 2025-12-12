@@ -31,40 +31,39 @@
                     HorizontalOptions="Start"
                     StrokeShape="RoundRectangle 20"
                     StrokeThickness="1">
-
-                    <HorizontalStackLayout>
-                        <Label
-                            FontSize="24"
-                            HorizontalOptions="Start"
-                            HorizontalTextAlignment="Center"
-                            LineBreakMode="WordWrap"
-                            Text="{Binding Message.Content}"
-                            VerticalOptions="Start"
-                            VerticalTextAlignment="Center" />
-                        <Label
-                            FontSize="16"
-                            HorizontalOptions="End"
-                            Margin="10, 0"
-                            Text="{Binding Message.UpdatedAt, StringFormat='{0:HH:mm}'}"
-                            VerticalOptions="End" />
-                    </HorizontalStackLayout>
+                    <VerticalStackLayout>
+                        <HorizontalStackLayout>
+                            <Label
+                                FontSize="24"
+                                HorizontalOptions="Start"
+                                HorizontalTextAlignment="Center"
+                                LineBreakMode="WordWrap"
+                                Text="{Binding Message.Content}"
+                                VerticalOptions="Start"
+                                VerticalTextAlignment="Center" />
+                            <Label
+                                FontSize="16"
+                                HorizontalOptions="End"
+                                Margin="10, 0"
+                                Text="{Binding Message.UpdatedAt, StringFormat='{0:HH:mm}'}"
+                                VerticalOptions="End" />
+                        </HorizontalStackLayout>
+                        <CollectionView ItemsSource="{Binding Message.Files}" 
+                            ItemsLayout="VerticalList"
+                            SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="10">
+                                        <Image  Source="{Binding URL} " />
+                                        <!--<MediaElement IsVisible="{Binding IsVideo}" Source="{Binding MinIOUrl}" AutoPlay="False"/>-->
+                                        <!--<Button IsVisible="{Binding IsOtherFile}" Text="{Binding FileName}" />-->
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
                 </Border>
-                <CollectionView ItemsSource="{Binding Files}" 
-                    ItemsLayout="VerticalList"
-                    SelectionMode="None"
-                    Grid.Row="2"
-                    Grid.Column="0"
-                    Grid.ColumnSpan="2">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid> 
-                                <Image IsVisible="{Binding IsImage}" Source="{Binding URL} " />
-                                <!--<MediaElement IsVisible="{Binding IsVideo}" Source="{Binding MinIOUrl}" AutoPlay="False"/>-->
-                                <Button IsVisible="{Binding IsOtherFile}" Text="{Binding FileName}" />
-                            </Grid>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                
             </Grid>
         </DataTemplate>
 
@@ -79,14 +78,14 @@
                     HorizontalOptions="End"
                     StrokeShape="RoundRectangle 20"
                     StrokeThickness="1">
-
-                    <HorizontalStackLayout>
-                        <Label
+                    <VerticalStackLayout>
+                        <HorizontalStackLayout>
+                            <Label
                             Margin="10,0"
                             FontSize="20"
                             IsVisible="{Binding Message.IsRead}"
                             Text="✔" />
-                        <Label
+                            <Label
                             FontSize="24"
                             HorizontalOptions="Start"
                             HorizontalTextAlignment="Center"
@@ -94,30 +93,28 @@
                             Text="{Binding Message.Content}"
                             VerticalOptions="Start"
                             VerticalTextAlignment="Center" />
-                        <Label
+                            <Label
                             FontSize="16"
                             HorizontalOptions="End"
                             Margin="10, 0"
                             Text="{Binding Message.UpdatedAt, StringFormat='{0:HH:mm}'}"
                             VerticalOptions="End" />
-                    </HorizontalStackLayout>
+                        </HorizontalStackLayout>
+                        <CollectionView ItemsSource="{Binding Message.Files}" 
+    ItemsLayout="VerticalList"
+    SelectionMode="None">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="10">
+                                        <Image  Source="{Binding URL} " />
+                                        <!--<MediaElement IsVisible="{Binding IsVideo}" Source="{Binding MinIOUrl}" AutoPlay="False"/>-->
+                                        <!--<Button IsVisible="{Binding IsOtherFile}" Text="{Binding FileName}" />-->
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
                 </Border>
-                <CollectionView ItemsSource="{Binding Message.Files}" 
-                    ItemsLayout="VerticalList"
-                    SelectionMode="None"
-                    Grid.Row="2"
-                    Grid.Column="0"
-                    Grid.ColumnSpan="2">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <Image  Source="{Binding URL} " />
-                                <!--<MediaElement IsVisible="{Binding IsVideo}" Source="{Binding MinIOUrl}" AutoPlay="False"/>-->
-                                <!--<Button IsVisible="{Binding IsOtherFile}" Text="{Binding FileName}" />-->
-                            </Grid>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
             </Grid>
         </DataTemplate>
 
