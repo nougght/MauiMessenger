@@ -155,6 +155,7 @@ namespace MauiMessenger.ViewModels
         {
           ++i;
         }
+        // если не оказалось входящих сообщений в области  видимости
         if (i > lastItem)
         {
           return;

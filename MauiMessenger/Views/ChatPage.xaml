@@ -3,7 +3,9 @@
     x:Class="MauiMessenger.Views.ChatPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:local="clr-namespace:MauiMessenger.Views"
+    
     Title="ChatPage">
     <ContentPage.Resources>
         <DataTemplate x:Key="IncomingMessageTemplate">
@@ -54,8 +56,9 @@
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="10">
-                                        <Image  Source="{Binding URL} " />
-                                        <!--<MediaElement IsVisible="{Binding IsVideo}" Source="{Binding MinIOUrl}" AutoPlay="False"/>-->
+                                        <Image IsVisible="{Binding IsImage}" Source="{Binding URL} " />
+                                        <toolkit:MediaElement IsVisible="{Binding IsVideo}" Source="{Binding URL}" />
+                                      
                                         <!--<Button IsVisible="{Binding IsOtherFile}" Text="{Binding FileName}" />-->
                                     </Grid>
                                 </DataTemplate>
@@ -106,8 +109,8 @@
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Padding="10">
-                                        <Image  Source="{Binding URL} " />
-                                        <!--<MediaElement IsVisible="{Binding IsVideo}" Source="{Binding MinIOUrl}" AutoPlay="False"/>-->
+                                        <Image IsVisible="{Binding IsImage}" Source="{Binding URL} " />
+                                        <toolkit:MediaElement IsVisible="{Binding IsVideo}" Source="{Binding URL}" ShouldShowPlaybackControls="True" />
                                         <!--<Button IsVisible="{Binding IsOtherFile}" Text="{Binding FileName}" />-->
                                     </Grid>
                                 </DataTemplate>

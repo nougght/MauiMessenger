@@ -18,7 +18,7 @@ namespace MauiMessenger.Services
           new PickOptions
           {
             PickerTitle = "Выберите файл(ы)",
-            FileTypes = FilePickerFileType.Images
+            
           });
         return res.ToList();
       }

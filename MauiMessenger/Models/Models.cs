@@ -47,5 +47,9 @@ namespace MauiMessenger.Models
   {
     public string URL { get; set; }
 
-  }
+    public bool IsImage { get => this.FileType.Split('/')[0] == "image"; }
+    public bool IsVideo { get => this.FileType.Split('/')[0] == "video"; }
+        public bool IsAudio { get => this.FileType.Split('/')[0] == "audio"; }
+
+    }
 }

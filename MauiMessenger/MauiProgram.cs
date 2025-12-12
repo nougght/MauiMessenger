@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Maui;
 using CommunityToolkit.Mvvm.DependencyInjection;
-using CommunityToolkit.Maui.Media;
+
 using MauiMessenger.Models;
 using MauiMessenger.Services;
 using MauiMessenger.ApiClient;
@@ -42,6 +42,7 @@ namespace MauiMessenger
 
       builder
           .UseMauiApp<App>().UseMauiCommunityToolkit()
+          .UseMauiCommunityToolkitMediaElement()
           .ConfigureFonts(fonts =>
           {
             fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");

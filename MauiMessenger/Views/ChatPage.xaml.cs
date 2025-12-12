@@ -114,6 +114,9 @@ public partial class ChatPage : ContentPage
 
   private async void ScrollMessagesToIndex(int index)
   {
+        if (index == 0)
+            return;
+
     if (MessagesView.ItemsSource is ObservableCollection<ChatItem> items && items.Count > 0)
     {
       if (viewModel.Indexes.Count <= index)

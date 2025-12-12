@@ -520,7 +520,8 @@ namespace MauiMessenger.Models
                 Username = old.Username,
                 UpdatedAt = old.UpdatedAt,
                 IsRead = true,
-                ReadByCount = old.ReadByCount + 1
+                ReadByCount = old.ReadByCount + 1,
+                Files = old.Files
               },
               CreatedAt = old.CreatedAt!.Value.DateTime,
               Type = ChatItemType.Message
