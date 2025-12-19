@@ -9,6 +9,7 @@ using MauiMessenger.ViewModels;
 using MauiMessenger.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MauiMessenger
 {
@@ -16,8 +17,21 @@ namespace MauiMessenger
   {
     public static MauiApp CreateMauiApp()
     {
-      var builder = MauiApp.CreateBuilder();
-      builder.Services.AddSingleton<MainViewModel>();
+      var builder = MauiApp.CreateBuilder(); builder.Services.AddTransient<AuthMessageHandler>();
+
+      builder.Services.AddHttpClient("Api", http =>
+      {
+        http.BaseAddress = new Uri("http://127.0.0.1:8080");
+      })
+.AddHttpMessageHandler<AuthMessageHandler>();
+
+      builder.Services.AddSingleton<Client>(sp =>
+      {
+        var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+        var httpClient = httpClientFactory.CreateClient("Api");
+
+        return new Client(httpClient.BaseAddress!.ToString(), httpClient);
+      });
 
       builder.Services.AddSingleton<ChatsTabViewModel>();
       builder.Services.AddSingleton<ContactsTabViewModel>();
@@ -28,17 +42,8 @@ namespace MauiMessenger
       builder.Services.AddSingleton<AppStateService>();
       builder.Services.AddSingleton<AuthService>();
       builder.Services.AddSingleton<ChatService>();
-      builder.Services.AddSingleton<Client>(
-        s =>
-        {
-          //var baseUrl = "http://10.0.2.2:8080
-          var baseUrl = "http://127.0.0.1:8080";
-          var httpClient = new HttpClient
-          {
-            BaseAddress = new Uri(baseUrl)
-          };
-          return new Client(baseUrl, httpClient);
-        });
+      builder.Services.AddSingleton<MainViewModel>();
+
 
       builder
           .UseMauiApp<App>().UseMauiCommunityToolkit()

@@ -13,6 +13,7 @@ namespace MauiMessenger.Services
 {
   public class SignalRService
   {
+    AppStateService _appState;
 
     HubConnection _hubConnection;
 
@@ -29,11 +30,19 @@ namespace MauiMessenger.Services
 
     public event Action? HubConnectionClosed;
 
-    public SignalRService()
+    public SignalRService(AppStateService appState)
     {
+      _appState = appState;
       _hubConnection = new HubConnectionBuilder()
           //.WithUrl("http://10.0.2.2:8080/chat")
-          .WithUrl("http://127.0.0.1:8080/chat")
+          .WithUrl("http://127.0.0.1:8080/chat", options =>
+          {
+            options.AccessTokenProvider = async () =>
+            {
+              return _appState.AccessToken;
+            };
+          })
+          .WithAutomaticReconnect()
           .Build();
 
       _hubConnection.Closed += async (error) =>

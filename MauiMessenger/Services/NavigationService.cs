@@ -58,6 +58,9 @@ namespace MauiMessenger.Services
 
     public static async Task GoToSearchPageAsync()
     {
+      //var vm = Ioc.Default.GetRequiredService<SearchViewModel>();
+      //var page = new SearchPage(vm);
+      //await Shell.Current.Navigation.PushModalAsync(page);
       await Shell.Current.GoToAsync(nameof(SearchPage));
     }
 

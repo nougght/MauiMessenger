@@ -26,8 +26,10 @@ namespace MauiMessenger.Services
 
     public async Task<UserDTO> TrySignIn(string  username)
     {
-      var user = await _api.LoginAsync(username, "");
-      _appState.CurrentUser = user;
+      var response = await _api.LoginAsync(username, "");
+      var user = response.User;
+      await _appState.SetSession(response.AccessToken, response.RefreshToken, response.User);
+
       await _data.LoadChatsAsync();
       await _data.LoadContactsAsync();
       await _signalR.Connect();
@@ -35,5 +37,7 @@ namespace MauiMessenger.Services
       return user;
 
     }
+
+
   }
 }

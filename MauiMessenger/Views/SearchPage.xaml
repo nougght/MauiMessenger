@@ -3,7 +3,12 @@
     x:Class="MauiMessenger.Views.SearchPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="SearchPage">
+    Title="SearchPage"
+    Shell.NavBarIsVisible="False">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False" />
+    </Shell.BackButtonBehavior>
     <Grid ColumnDefinitions="*" RowDefinitions="Auto, *, 10">
         <Grid
             Grid.Row="0"
