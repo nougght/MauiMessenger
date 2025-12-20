@@ -24,9 +24,9 @@ namespace MauiMessenger.Services
       _signalR = signalR;
     }
 
-    public async Task<UserDTO> TrySignIn(string  username)
+    public async Task<UserDTO> TrySignIn(string  username, string password)
     {
-      var response = await _api.LoginAsync(username, "");
+      var response = await _api.LoginAsync(username, password);
       var user = response.User;
       await _appState.SetSession(response.AccessToken, response.RefreshToken, response.User);
 

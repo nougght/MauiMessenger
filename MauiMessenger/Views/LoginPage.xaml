@@ -8,26 +8,45 @@
         <BackButtonBehavior IsEnabled="False" IsVisible="False" />
     </Shell.BackButtonBehavior>
 
-    <VerticalStackLayout VerticalOptions="Center">
+    <Grid VerticalOptions="Center"
+          RowDefinitions="Auto, Auto, Auto, Auto">
         <Label
+            Grid.Row="0"
             Margin="10"
             FontSize="26"
             HorizontalOptions="Center"
             Text="Login"
             VerticalOptions="Center" />
         <Entry
+            Grid.Row="1"
             Margin="20,10"
             FontSize="26"
             Placeholder="Username"
             Text="{Binding Username}"
             VerticalOptions="Center" />
 
+        <Entry
+            Grid.Row="2"
+            Margin="20, 10"
+            
+            IsPassword="True"
+            FontSize="26"
+            Placeholder="Password"
+            Text="{Binding Password}"
+            VerticalOptions="Center"
+            />
+
+
+
+
         <Button
+            
+            Grid.Row="4"
             x:Name="SignInButton"
             Margin="30"
             Command="{Binding SignInButtonClickedCommand}"
             FontSize="24"
             HorizontalOptions="Center"
             Text="Войти" />
-    </VerticalStackLayout>
+    </Grid>
 </ContentPage>
