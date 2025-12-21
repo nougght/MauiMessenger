@@ -15,12 +15,14 @@ public class MessageTemplateSelector : DataTemplateSelector
   public DataTemplate DaySeparatorTemplate { get; set; }
   public DataTemplate UnreadMarkerTemplate { get; set; }
   public DataTemplate LoadingTemplate { get; set; }
+  public DataTemplate AudioTemplate { get; set; }
   public static Guid CurrentUserId { get; set; }
 
   protected override DataTemplate OnSelectTemplate(object item, BindableObject container)
   {
-    return item switch
+   return item switch
     {
+      MessageItem msg when msg.Type == ChatItemType.Audio => AudioTemplate,
       MessageItem msg when msg.Message.SenderId == CurrentUserId => OutgoingTemplate,
       MessageItem msg when msg.Message.SenderId != CurrentUserId => IncomingTemplate,
       ServiceMessageItem => ServiceTemplate,
@@ -66,6 +68,9 @@ public partial class ChatPage : ContentPage
 
   public ChatViewModel viewModel;
 
+  public event Action RecordPressed;
+  public event Action RecordReleased;
+
   //public ObservableCollection<MessageDto> Messages { get => viewModel.Messages; };
   //public string Message
   public ChatPage(ChatViewModel vm)
@@ -76,6 +81,14 @@ public partial class ChatPage : ContentPage
     BindingContext = viewModel;
     viewModel.MessageSent += () =>
       { ScrollMessagesToBottom(viewModel, EventArgs.Empty); };
+    viewModel.Alert += (text) =>
+    {
+      DisplayAlert("¬нимание", "«апись голосовых сообщений доступна только на мобильных устройствах",
+        "Ok");
+    };
+
+    RecordPressed += () => { viewModel.OnPressed(); };
+    RecordReleased += () => { viewModel.OnReleased(); };
 
     MessageTemplateSelector.CurrentUserId = vm.User.UserId;
     //vm.MessageSent += ScrollMessagesToBottom;
@@ -176,6 +189,15 @@ public partial class ChatPage : ContentPage
   }
 
 
+  private void OnPressed(object sender, EventArgs e)
+  {
+    RecordPressed?.Invoke();
+  }
+
+  private void OnReleased(object sender, EventArgs e)
+  {
+    RecordReleased?.Invoke();
+  }
   private void MessagesView_Scrolled(object sender, ItemsViewScrolledEventArgs e)
   {
 

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiMessenger.Views.RegisterPage"
+             Title="RegisterPage">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsEnabled="False" IsVisible="False" />
+    </Shell.BackButtonBehavior>
+    <ScrollView>
+        <Grid VerticalOptions="Center"
+          RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto">
+            <Label
+            Grid.Row="0"
+            Margin="10"
+            FontSize="26"
+            HorizontalOptions="Center"
+            Text="Register"
+            VerticalOptions="Center" />
+
+            <Entry
+            Grid.Row="1"
+            Margin="20,10"
+            FontSize="26"
+            Placeholder="Username"
+            Text="{Binding Username}"
+            VerticalOptions="Center" />
+
+            <Label
+            Grid.Row="2"
+            HorizontalOptions="Center"
+            Text="{Binding UsernameError}"
+            TextColor="Red"
+            />
+
+            <Entry
+            Grid.Row="3"
+            Margin="20, 10"
+            
+            IsPassword="True"
+            FontSize="26"
+            Placeholder="Password"
+            Text="{Binding Password}"
+            VerticalOptions="Center"
+            />
+            <Label
+            Grid.Row="4"
+            HorizontalOptions="Center"
+            Text="{Binding PasswordError}"
+            TextColor="Red"
+            />
+            <Entry
+            Grid.Row="5"
+            Margin="20, 10"
+            
+            IsPassword="True"
+            FontSize="26"
+            Placeholder="Password Confirmation"
+            Text="{Binding PasswordConfirmation}"
+            VerticalOptions="Center"
+            />
+            <Label
+            Grid.Row="6"
+            HorizontalOptions="Center"
+            Text="{Binding PasswordConfirmationError}"
+            TextColor="Red"
+            />
+            <CheckBox
+            Grid.Row="7"
+            IsChecked="{Binding UseEmail}"
+            />
+            <Entry
+            Grid.Row="8"
+            Margin="20, 10"
+            FontSize="26"
+            Placeholder="example@gmail.com"
+            IsEnabled ="{Binding UseEmail}"
+            Text="{Binding Email}"
+            />
+
+            <Label
+            Grid.Row="9"
+            HorizontalOptions="Center"
+            Text="{Binding EmailError}"
+            TextColor="Red"
+            />
+
+
+
+            <Label
+            Grid.Row="10"
+            HorizontalOptions="Center"
+            Text="{Binding ResponseError}"
+            TextColor="Red"
+            />
+
+
+            <Button
+            Grid.Row="11"
+            x:Name="SignUpButton"
+            Margin="0, 20, 0, 10"
+            Command="{Binding SignUpButtonClickedCommand}"
+            IsEnabled="{Binding IsSignUpButtonEnabled}"
+            FontSize="24"
+            HorizontalOptions="Center"
+            Text="Зарегистрироваться" />
+
+            <Button
+                Grid.Row="12"
+                x:Name="ToSignIn"
+                BackgroundColor="Transparent"
+                Command="{Binding ToSignInButtonClickedCommand}"
+                TextColor="Purple"
+            FontSize="24"
+            HorizontalOptions="Center"
+            Text="Уже есть аккаунт" />
+        </Grid>
+    </ScrollView>
+</ContentPage>

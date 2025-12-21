@@ -23,6 +23,7 @@ namespace MauiMessenger.Services
 
 
     public event Action<MessageDTO>? OnMessageReceived;
+    public event Action<HashSet<UserStatusDto>>? OnStatusesReceived;
 
     public event Action<ChatDTO>? OnChatCreated;
 
@@ -57,6 +58,7 @@ namespace MauiMessenger.Services
       };
 
       Debug.WriteLine("SignalRService CREATED");
+
       _hubConnection.Remove("Receive");
       _hubConnection.On<MessageDTO>("Receive", (message) =>
       {
@@ -79,6 +81,14 @@ namespace MauiMessenger.Services
         //AddLocalChat(chat);
         OnUpdateReadStatuses?.Invoke(chatId, userId, positionId, readAt);
       });
+
+
+      _hubConnection.On <HashSet<UserStatusDto>>("ReceiveUsersStatuses", (statuses) =>
+      {
+        //SendLocalMessage(message);
+        OnStatusesReceived?.Invoke(statuses);
+      });
+
 
       IsConnected = false;
     }
@@ -135,6 +145,11 @@ namespace MauiMessenger.Services
     public async Task UpdateChatReadPosition(Guid chatId, Guid userId, Guid newReadPositionId, DateTime readAt)
     {
       await _hubConnection.InvokeAsync("UpdateChatReadPosition", chatId, userId, newReadPositionId, readAt);
+    }
+
+    public async Task SendUsersStatusesRequest(HashSet<string> ids)
+    {
+      await _hubConnection.InvokeAsync("GetUsersStatuses", _appState.CurrentUser.UserId, ids);
     }
   }
 }

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiMessenger.Views.CodeVerificationPage"
+             Title="CodeVerificationPage">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsEnabled="False" IsVisible="False" />
+    </Shell.BackButtonBehavior>
+
+    <Grid VerticalOptions="Center"
+      RowDefinitions="Auto, Auto, Auto, Auto">
+        <Label
+        Grid.Row="0"
+        Margin="10"
+        FontSize="26"
+        HorizontalOptions="Center"
+        Text="Verify Code"
+        VerticalOptions="Center" />
+        
+        <Label
+        Grid.Row="1"
+        Margin="10"
+        FontSize="22"
+        HorizontalOptions="Center"
+        Text="{Binding Email}"
+        VerticalOptions="Center" />
+        
+        <Entry
+        Grid.Row="2"
+        Margin="20,10"
+        FontSize="26"
+        Placeholder="000000"
+        MaxLength="6"
+        Text="{Binding Code}"
+        VerticalOptions="Center" />
+
+
+        <Label
+            Grid.Row="10"
+            HorizontalOptions="Center"
+            Text="{Binding codeError}"
+            TextColor="Red"
+            />
+        
+        <Button
+            Grid.Row="3"
+            x:Name="VerifyCodeButton"
+            Margin="30"
+            Command="{Binding VerifyCodeButtonClickedCommand}"
+            IsEnabled="{Binding IsCodeValid}"
+            FontSize="24"
+            HorizontalOptions="Center"
+            Text="Отправить" />
+    </Grid>
+</ContentPage>

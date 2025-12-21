@@ -26,6 +26,7 @@ namespace MauiMessenger.Services
         chatVm.Indexes = indexes;
         chatVm.LastReadMessageId = chat.LastReadMessageId;
         chatVm.LastReadMessageIndex = chatItems.IndexOf(chatItems.FirstOrDefault(x => x is MessageItem msg && msg.Message.Id == chat.LastReadMessageId));
+        
       });
 
       var page = new ChatPage(chatVm);
@@ -73,6 +74,50 @@ namespace MauiMessenger.Services
 
 
     //Shell.Current.GoToAsync("//login");
+
+
+
+
+
+
+
+    public static async Task GoToLoginPage()
+    {
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var loginVm = Ioc.Default.GetRequiredService<LoginViewModel>();
+        Application.Current!.MainPage = new NavigationPage(new LoginPage(loginVm));
+      });
+    }
+
+    public static async Task GoToRegisterPage()
+    {
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        var registerVm = Ioc.Default.GetRequiredService<RegisterViewModel>();
+        Application.Current!.MainPage = new NavigationPage(new RegisterPage(registerVm));
+      });
+    }
+
+    public static async Task GoToEmailVerificationPage(string email, bool isPasswordRecovery)
+    {
+      var verifyVm = Ioc.Default.GetRequiredService<CodeVerificationViewModel>();
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        verifyVm.Email = email;
+        verifyVm.IsPasswordRecovery = isPasswordRecovery;
+      });
+
+      var page = new CodeVerificationPage(verifyVm);
+      await MainThread.InvokeOnMainThreadAsync(async () =>
+      {
+        await Application.Current!
+            .MainPage!
+            .Navigation
+            .PushAsync(page);
+      });
+    }
+
   }
 
 }

@@ -10,54 +10,103 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MauiMessenger.ViewModels
 {
-    public partial class LoginViewModel : BaseViewModel
+  public partial class LoginViewModel : BaseViewModel
+  {
+
+    private readonly DataRepository _data;
+    private readonly AppStateService _appState;
+    private readonly AuthService _authService;
+
+
+    public Command SignInButtonClickedCommand { get; }
+    public Command ToSignUpButtonClickedCommand { get; }
+    public Command BackButtonClickedCommand { get; }
+
+
+    [ObservableProperty]
+    private string username;
+
+    [ObservableProperty]
+    private string password;
+
+
+    public bool IsSignInButtonEnabled
     {
-
-        private readonly DataRepository _data;
-        private readonly AppStateService _appState;
-        private readonly AuthService _authService;
-
-
-        public Command SignInButtonClickedCommand { get; }
-        public Command BackButtonClickedCommand { get; }
+      get
+      {
+        return UsernameError == null && PasswordError == null;
+      }
+    }
 
 
-        [ObservableProperty]
-        private string username;
+    [NotifyPropertyChangedFor(nameof(IsSignInButtonEnabled))]
+    [ObservableProperty]
+    private string? usernameError;
 
-        [ObservableProperty]
-        private string password;
+    [NotifyPropertyChangedFor(nameof(IsSignInButtonEnabled))]
+    [ObservableProperty]
+    private string? passwordError;
 
-        public LoginViewModel(DataRepository data, AppStateService appState, AuthService authService)
-        {
-            _data = data;
-            _appState = appState;
-            _authService = authService;
+    [NotifyPropertyChangedFor(nameof(IsSignInButtonEnabled))]
+    [ObservableProperty]
+    private string? responseError;
 
-            SignInButtonClickedCommand = new Command(async () => await OnSignInClicked(), () => true);
+    public LoginViewModel(DataRepository data, AppStateService appState, AuthService authService)
+    {
+      _data = data;
+      _appState = appState;
+      _authService = authService;
 
-            BackButtonClickedCommand = new Command(async () => await NavigationService.GoBackAsync());
-        }
+      ToSignUpButtonClickedCommand = new Command(async () => await NavigationService.GoToRegisterPage(), () => true);
 
-        // initialization data before login
-        public async Task Init()
-        {
-            if (_data.ChatTypes.Count == 0)
-            {
-                await _data.LoadEnumsAsync();
+      SignInButtonClickedCommand = new Command(async () => await OnSignInClicked(), () => true);
 
-            }
-
-        }
+      BackButtonClickedCommand = new Command(async () => await NavigationService.GoBackAsync());
+    }
 
 
-        public async Task OnSignInClicked()
-        {
-            await _authService.TrySignIn(this.Username, this.Password);
-            Application.Current.MainPage = new AppShell();
-        }
+    partial void OnUsernameChanged(string value)
+    {
+      UsernameError = _authService.ValidateUsername(value);
+    }
 
+    partial void OnPasswordChanged(string value)
+    {
+      PasswordError = _authService.ValidatePassword(value);
+    }
+
+    // initialization data before login
+    public async Task Init()
+    {
+      if (_data.ChatTypes.Count == 0)
+      {
+        await _data.LoadEnumsAsync();
+
+      }
 
     }
+
+
+    public async Task OnSignInClicked()
+    {
+      var username = Username.Contains('@') ? null : Username;
+      var email = Username.Contains('@') ? Username : null;
+      var status = await _authService.TrySignIn(username: username, password: this.Password, email: email);
+      if (status != AuthResponseStatus.Success)
+      {
+        ResponseError = status switch
+        {
+          AuthResponseStatus.Error => "Ошибка",
+          _ => "Пользователь с таким логином не найден"
+        };
+      }
+      else
+      {
+        Application.Current.MainPage = new AppShell();
+      }
+    }
+
+
+  }
 
 }

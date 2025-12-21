@@ -25,10 +25,10 @@ namespace MauiMessenger
 
       var mainVM = services.GetService<MainViewModel>();
 
-      var vm = services.GetService<LoginViewModel>();
+      var vm = services.GetService<RegisterViewModel>();
 
       // запуск страницы входа
-      MainPage = new LoginPage(vm);
+      MainPage = new NavigationPage(new RegisterPage(vm));
 
 
     }

@@ -7,7 +7,9 @@
     xmlns:local="clr-namespace:MauiMessenger.Views"
     
     Title="ChatPage">
+
     <ContentPage.Resources>
+        <local:BoolToOnlineTextConverter x:Key="BoolToOnlineTextConverter" />
         <DataTemplate x:Key="IncomingMessageTemplate">
             <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto" HorizontalOptions="FillAndExpand">
 
@@ -182,6 +184,10 @@
             IsRunning="true"/>
             </Grid>
         </DataTemplate>
+        <DataTemplate x:Key="AudioTemplate">
+            <local:VoiceMessage AudioUrl="{Binding Message.Files[0].URL}" />
+        </DataTemplate>
+
 
         <local:MessageTemplateSelector
             x:Key="MessageSelector"
@@ -209,6 +215,7 @@
                 Grid.Row="0"
                 BackgroundColor="Transparent"
                 ColumnDefinitions="Auto, Auto, *">
+                
 
                 <ImageButton
                     Grid.Row="0"
@@ -235,14 +242,25 @@
                         Source="image.png"
                         VerticalOptions="Center" />
                 </Border>
-                <Label
+                <VerticalStackLayout
                     Grid.Row="0"
-                    Grid.Column="2"
-                    Margin="10,0,0,0"
-                    FontSize="30"
+                    Grid.Column="2">
+                    
+                <Label
+                    Margin="10,0,0,5"
+                    FontSize="25"
                     HorizontalOptions="FillAndExpand"
                     Text="{Binding Chat.Name}"
                     VerticalOptions="Center" />
+                
+                <Label
+                    Margin="10,0,0,0"
+                    FontSize="15"
+                    HorizontalOptions="FillAndExpand"
+                    IsVisible="{Binding IsPrivate}"
+                    Text="{Binding Status.IsOnline, Converter={StaticResource BoolToOnlineTextConverter}}"
+                    VerticalOptions="Center" />
+                </VerticalStackLayout>
             </Grid>
 
         </Border>
@@ -299,7 +317,19 @@
                 FontSize="30"
                 HorizontalOptions="FillAndExpand"
                 Placeholder="Message"
-                Text="{Binding Message}" />
+                Text="{Binding Message}"
+                IsVisible="{Binding AudioIsNotRecording}"/>
+
+
+
+            <Label
+                Grid.Column="0"
+                Grid.Row="1"
+                FontSize="30"
+                HorizontalOptions="FillAndExpand"
+                Text="{Binding RecordDuration, StringFormat='{0:HH:mm:ss}'}"
+                IsVisible="{Binding IsAudioRecording}"/>
+
             <!--  TextChanged="{Binding EditorText_Changed}"  -->
             <ImageButton
                 Grid.Column="1"
@@ -314,6 +344,23 @@
                 Source="add_file.png"
                 VerticalOptions="End"
                 WidthRequest="40" />
+
+            <ImageButton
+                Grid.Column="2"
+                Grid.Row="1"
+                Margin="10"
+                Aspect="AspectFit"
+                BackgroundColor="Transparent"
+                Pressed="OnPressed"
+                Released="OnReleased"
+                IsVisible="{Binding IsAudioMode}"
+                HeightRequest="40"
+                HorizontalOptions="End"
+                IsEnabled="True"
+                Source="record.png"
+                VerticalOptions="End"
+                WidthRequest="40" />
+            
             <ImageButton
                 Grid.Column="2"
                 Grid.Row="1"
@@ -321,6 +368,7 @@
                 Aspect="AspectFit"
                 BackgroundColor="Transparent"
                 Command="{Binding SendMessageCommand}"
+                IsVisible="{Binding IsMessageMode}"
                 HeightRequest="40"
                 HorizontalOptions="End"
                 IsEnabled="True"

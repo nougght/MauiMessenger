@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,7 @@ namespace MauiMessenger.Models
     DateTime CreatedAt { get; }
   }
 
-  public enum ChatItemType { Message, DaySeparator, UnreadMarker, ServiceMessage}
+  public enum ChatItemType { Message, Audio, DaySeparator, UnreadMarker, ServiceMessage}
   public abstract class ChatItem
   { 
     public ChatItemType Type { get; set; }
@@ -52,4 +53,21 @@ namespace MauiMessenger.Models
         public bool IsAudio { get => this.FileType.Split('/')[0] == "audio"; }
 
     }
+
+  public partial class UserStatus : ObservableObject
+  {
+    public Guid UserId { get; set; }
+
+    [ObservableProperty]
+    private bool isOnline;
+
+    public static UserStatus FromUserStatusDto(UserStatusDto userStatusDto)
+    {
+      return new UserStatus
+      {
+        UserId = userStatusDto.UserId,
+        isOnline = userStatusDto.IsOnline,
+      };
+    }
+  }
 }

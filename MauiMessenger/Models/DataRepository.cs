@@ -17,6 +17,7 @@ namespace MauiMessenger.Models
   public class DataRepository : ObservableObject
   {
     private readonly Client _api;
+    private readonly SignalRService _signalR;
     private readonly AppStateService _appState;
 
     public ObservableCollection<ChatDTO> Chats { get; } = new();
@@ -135,10 +136,17 @@ namespace MauiMessenger.Models
         target.Add(item);
     }
 
-    public DataRepository(Client api, AppStateService state)
+    public DataRepository(Client api, AppStateService state, SignalRService signalR)
     {
       _api = api;
       _appState = state;
+      _signalR = signalR;
+
+      _signalR.OnStatusesReceived += (statuses) =>
+      {
+        var param = statuses.Select(s => UserStatus.FromUserStatusDto(s)).ToHashSet();
+        _appState.UpdateUserStatuses(param);
+      };
       Chats.CollectionChanged += (a, e) =>
       {
         Debug.WriteLine($"[CollectionChanged] Action = {e.Action}");
@@ -153,6 +161,7 @@ namespace MauiMessenger.Models
 
         Debug.WriteLine("-----");
       };
+      _signalR = signalR;
     }
 
 
@@ -200,6 +209,7 @@ namespace MauiMessenger.Models
         var userChats = (await _api.ChatsAsync(_appState.CurrentUser.UserId)).Chats;
         Chats.Clear();
 
+        HashSet<string> users = new();
         foreach (var chat in userChats)
         {
           if (chat.Type.Id == PrivateTypeId)
@@ -207,7 +217,17 @@ namespace MauiMessenger.Models
             chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
           }
           Chats.Add(chat);
+          foreach (var member in chat.Members)
+          {
+            if (member.UserId !=  _appState.CurrentUser.UserId)
+            {
+              users.Add(member.UserId.ToString());
+            }
+          }
         }
+
+        await _signalR.SendUsersStatusesRequest(users);
+
       }
       else
       {
@@ -454,7 +474,7 @@ namespace MauiMessenger.Models
             {
               Message = updated,
               CreatedAt = updated.CreatedAt!.Value.DateTime,
-              Type = ChatItemType.Message
+              Type = updated.Files.Count > 1 && updated.Files.First().FileType.StartsWith("audio/") ? ChatItemType.Audio : ChatItemType.Message
             });
           });
           // event messages changed

@@ -1,13 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using MauiMessenger.ApiClient;
 using MauiMessenger.Models;
 using MauiMessenger.Services;
+using Microsoft.Maui.Dispatching;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.ViewModels
 {
@@ -22,19 +23,44 @@ namespace MauiMessenger.ViewModels
     private readonly AppStateService _appState;
     private readonly ChatService _chatService;
 
+
+    [NotifyPropertyChangedFor(nameof(IsPrivate))]
     [ObservableProperty]
     private ChatDTO chat;
 
     public ObservableCollection<ChatItem> ChatItems { get; set; } = new();
     public List<int> Indexes { get; set; } = new();
 
+
+    [NotifyPropertyChangedFor(nameof(IsAudioMode))]
+    [NotifyPropertyChangedFor(nameof(IsMessageMode))]
     [ObservableProperty]
     private string message;
 
     public ObservableCollection<FileResult> Files { get; set; } = new();
 
+
+    [ObservableProperty]
+    private TimeSpan recordDuration = TimeSpan.Zero;
+
+    private IDispatcher _recordTimer;
+
+
+    [NotifyPropertyChangedFor(nameof(AudioIsNotRecording))]
+    [ObservableProperty]
+    private bool isAudioRecording;
+
+    public bool AudioIsNotRecording => !IsAudioRecording;
+
+    public bool IsAudioMode => IsAudioRecording || string.IsNullOrEmpty(message);
+
+    public bool IsMessageMode => !IsAudioMode;
+
+    public string? AudioFilePath { get; set; }
+
     public Command ChatHeaderClickedCommand { get; }
     public Command PickFileCommand { get; }
+    public Command RecordClickedCommand { get; }
     public Command SendMessageCommand { get; }
     public Command BackButtonClickedCommand { get; }
 
@@ -43,9 +69,18 @@ namespace MauiMessenger.ViewModels
     public Guid? LastReadMessageId;
 
 
+    public UserStatus? Status { get; set; }
+
+    public string StatusText { get; set; } = "";
+
     public event Action MessageSent;
 
     public event Action<Guid, Guid?> ChatClosed;
+
+
+
+    public event Action<string> Alert;
+
 
 
     public int LastReadMessageIndex; // индекс последнего прочитанного в Indexes (только сообщения)
@@ -70,9 +105,15 @@ namespace MauiMessenger.ViewModels
       {
         await OnPickFileAsync();
       });
+      //RecordClickedCommand = new Command(() => {
+      //  if (IsAudioRecording == false)
+      //  {
+
+      //  }
+      //}, () => true);
       SendMessageCommand = new Command(async () =>
       {
-        await _chatService.SendMessageAsync(chat.Id, this.Message, this.Files.ToList());
+        await _chatService.SendMessageAsync(chat.Id, this.Message, this.Files.ToList(), audioPath: AudioFilePath);
         Message = "";
         MessageSent?.Invoke();
         //await _data.UpdateChatAsync(chat.Id);
@@ -87,7 +128,55 @@ namespace MauiMessenger.ViewModels
       ChatClosed += async (chatId, lastReadMessageId) => { await _chatService.OnChatClosed(chatId, lastReadMessageId); };
     }
 
+    public bool IsPrivate => Chat == default(ChatDTO) ? false : Chat.Type.Name == "private";
 
+    private void StartRecordingTimer()
+    {
+      RecordDuration = TimeSpan.Zero;
+
+      _recordTimer = Dispatcher.GetForCurrentThread();
+
+      _recordTimer.StartTimer(TimeSpan.FromSeconds(1), () =>
+      {
+        if (!IsAudioRecording)
+          return false;
+
+        RecordDuration = RecordDuration.Add(TimeSpan.FromSeconds(1));
+
+        return IsAudioRecording; // продолжать таймер, пока идет запись
+      });
+
+    }
+    private void StopRecordingTimer()
+    {
+      IsAudioRecording = false;
+    }
+
+
+    public async Task OnPressed()
+    {
+      var IsOk = await FileService.StartRecorder();
+      if (IsOk)
+      {
+        IsAudioRecording = true;
+        StartRecordingTimer();
+      }
+      else
+      {
+        Alert?.Invoke("Запись голосовых сообщений доступна только на мобильных устройствах");
+      }
+    }
+
+    public async Task OnReleased()
+    {
+      if (IsAudioRecording)
+      {
+        await FileService.StopRecorder();
+        StopRecordingTimer();
+        AudioFilePath = FileService.GetRecordedFilePath();
+        await _chatService.SendMessageAsync(chat.Id, this.Message, this.Files.ToList(), audioPath: AudioFilePath);
+      }
+    }
 
     //public void ApplyQueryAttributes(IDictionary<string, object> query)
     //{
@@ -109,12 +198,18 @@ namespace MauiMessenger.ViewModels
 
     //  }
     //}
-    //partial void OnChatChanged(ChatDTO value)
-    //{
-    //  MainThread.BeginInvokeOnMainThread(async () =>
-    //  {
-    //    Messages = _chatService.GetMessages(chat.Id);
-    //  });
+
+    partial void OnChatChanged(ChatDTO value)
+    {
+      MainThread.BeginInvokeOnMainThread(async () =>
+      {
+        if (IsPrivate)
+        {
+          Status = _appState.GetUserStatusById(Chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)!.UserId);
+        }
+      });
+    }
+
 
     //}
 

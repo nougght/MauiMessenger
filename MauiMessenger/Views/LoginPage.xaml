@@ -9,7 +9,7 @@
     </Shell.BackButtonBehavior>
 
     <Grid VerticalOptions="Center"
-          RowDefinitions="Auto, Auto, Auto, Auto">
+          RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto">
         <Label
             Grid.Row="0"
             Margin="10"
@@ -25,8 +25,16 @@
             Text="{Binding Username}"
             VerticalOptions="Center" />
 
-        <Entry
+
+        <Label
             Grid.Row="2"
+            HorizontalOptions="Center"
+            Text="{Binding UsernameError}"
+            TextColor="Red"
+            />
+        
+        <Entry
+            Grid.Row="3"
             Margin="20, 10"
             
             IsPassword="True"
@@ -36,17 +44,40 @@
             VerticalOptions="Center"
             />
 
-
-
-
-        <Button
-            
+        <Label
             Grid.Row="4"
+            HorizontalOptions="Center"
+            Text="{Binding PasswordError}"
+            TextColor="Red"
+            />
+
+
+
+        <Label
+            Grid.Row="5"
+            HorizontalOptions="Center"
+            Text="{Binding ResponseError}"
+            TextColor="Red"
+            />
+        <Button
+            Grid.Row="6"
             x:Name="SignInButton"
-            Margin="30"
+            Margin="0, 20, 0, 10"
             Command="{Binding SignInButtonClickedCommand}"
+            IsEnabled="{Binding IsSingInButtonEnabled}"
             FontSize="24"
             HorizontalOptions="Center"
             Text="Войти" />
+
+
+        <Button
+            Grid.Row="7"
+            x:Name="ToSignUp"
+            BackgroundColor="Transparent"
+            Command="{Binding ToSignUpButtonClickedCommand}"
+            TextColor="Purple"
+            FontSize="24"
+            HorizontalOptions="Center"
+            Text="Создать новый аккаунт" />
     </Grid>
 </ContentPage>

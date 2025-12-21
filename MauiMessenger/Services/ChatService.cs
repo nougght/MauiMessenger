@@ -1,14 +1,15 @@
-﻿//using CloudKit;
+﻿
+using MauiMessenger.ApiClient;
 using MauiMessenger.Models;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.Services
 {
@@ -31,7 +32,7 @@ namespace MauiMessenger.Services
     }
 
 
-    public async Task SendMessageAsync(Guid chatId, string text, List<FileResult> files)
+    public async Task SendMessageAsync(Guid chatId, string text, List<FileResult> files, string? audioPath = null)
     {
       try
       {
@@ -43,7 +44,18 @@ namespace MauiMessenger.Services
           Content = text,
           CreatedAt = DateTime.Now,
           Username = _appState.CurrentUser.Username,
-          Files = files.Select(f => new MessageFileDTO { FileKey = "", FileName = "file", Id = Guid.NewGuid() }).ToList()
+          Files = audioPath != null ?
+            new List<MessageFileDTO>
+            {
+              new MessageFileDTO
+              {
+                FileType = "audio/m4a",
+                FileKey = "",
+                FileName = "voice.m4a",
+                Id = Guid.NewGuid()
+              }
+            } :
+          files.Select(f => new MessageFileDTO {FileType = f.ContentType, FileKey = "", FileName = "file", Id = Guid.NewGuid() }).ToList()
         };
 
 
@@ -67,29 +79,57 @@ namespace MauiMessenger.Services
         // api request
         var response = await _api.MessagesPOSTAsync(msg);
         response.Files = new List<MessageFileDTO>();
-    var streams = new List<Stream>();
-        for (var i = 0; i < files.Count; i++)
+        if (audioPath != null)
         {
-          if (files[i] != null)
-          {
-            streams.Add(await files[i].OpenReadAsync());
-            long size = streams[i].Length;
-            var fileResp = await _api.PresignedUrlPOSTAsync(new PostFileRequest { MessageId = response.Id, FileName = files[i].FileName, FileType = files[i].ContentType, Size = size });
-            
+          using var fileStream = File.OpenRead(audioPath);
 
-            // uploading file to s3
-            using (var httpClient = new HttpClient())
+          using var content = new StreamContent(fileStream);
+          content.Headers.ContentType =
+              new System.Net.Http.Headers.MediaTypeHeaderValue("audio/m4a");
+          long size = fileStream.Length;
+
+          var audioResp = await _api.PresignedUrlPOSTAsync(new PostFileRequest { MessageId = response.Id, FileName = "audio.m4a", FileType = "audio/m4a", Size = size });
+
+          using var request = new HttpRequestMessage(HttpMethod.Put, audioResp.PutUrl)
+          {
+            Content = content
+          };
+
+          using (var httpClient = new HttpClient())
+          {
+            var putResponse = await httpClient.SendAsync(request);
+            putResponse.EnsureSuccessStatusCode();
+          }
+          audioResp.File.URL = await _api.PresignedUrlGETAsync(audioResp.File.FileKey);
+          response.Files.Add(audioResp.File);
+          //files.Add(new FileResult(audioPath));
+        }
+        else
+        {
+          var streams = new List<Stream>();
+          for (var i = 0; i < files.Count; i++)
+          {
+            if (files[i] != null)
             {
-              var putRequest = new HttpRequestMessage(HttpMethod.Put, fileResp.PutUrl)
+              streams.Add(await files[i].OpenReadAsync());
+              long size = streams[i].Length;
+              var fileResp = await _api.PresignedUrlPOSTAsync(new PostFileRequest { MessageId = response.Id, FileName = files[i].FileName, FileType = files[i].ContentType, Size = size });
+
+
+              // uploading file to s3
+              using (var httpClient = new HttpClient())
               {
-                Content = new StreamContent(streams[i])
-              };
-              putRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(files[i].ContentType);
-              var putResponse = await httpClient.SendAsync(putRequest);
-              putResponse.EnsureSuccessStatusCode();
+                var putRequest = new HttpRequestMessage(HttpMethod.Put, fileResp.PutUrl)
+                {
+                  Content = new StreamContent(streams[i])
+                };
+                putRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(files[i].ContentType);
+                var putResponse = await httpClient.SendAsync(putRequest);
+                putResponse.EnsureSuccessStatusCode();
+              }
+              fileResp.File.URL = await _api.PresignedUrlGETAsync(fileResp.File.FileKey);
+              response.Files.Add(fileResp.File);
             }
-            fileResp.File.URL = await _api.PresignedUrlGETAsync(fileResp.File.FileKey);
-            response.Files.Add(fileResp.File);
           }
         }
         // replacing temporary object
