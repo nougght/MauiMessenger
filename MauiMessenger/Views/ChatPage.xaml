@@ -310,9 +310,49 @@
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
+            <Button 
+                Grid.Row="1"
+                Grid.Column="0"
+                Text="ИИ-подсказки"
+                IsVisible="{Binding IsSuggestionsButtonVisible}"
+                Command="{Binding AiSuggestionsClickedCommand}"/>
+            <CollectionView 
+                x:Name="SuggestionsView"
+                ItemsSource="{Binding Suggestions}"
+                Grid.Row="1"
+                Grid.Column="0"
+                SelectionMode="None"
+                HorizontalScrollBarVisibility="Never"
+                ItemsLayout="HorizontalList"
+                
+                >
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border
+                            Padding="10"
+                            Margin="8"
+                            >
+                            <Label
+                                Text="{Binding}"
+                                FontSize="15"
+                                />
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <IndicatorView
+                Grid.Row="2"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                IndicatorLayout="{x:Reference SuggestionsView}"
+                IndicatorColor="azure"
+                SelectedIndicatorColor="Blue"
+                HorizontalOptions="Center"
+                />
             <Editor
                 Grid.Column="0"
-                Grid.Row="1"
+                Grid.Row="3"
                 AutoSize="TextChanges"
                 FontSize="30"
                 HorizontalOptions="FillAndExpand"
@@ -324,7 +364,7 @@
 
             <Label
                 Grid.Column="0"
-                Grid.Row="1"
+                Grid.Row="3"
                 FontSize="30"
                 HorizontalOptions="FillAndExpand"
                 Text="{Binding RecordDuration, StringFormat='{0:HH:mm:ss}'}"
@@ -333,7 +373,7 @@
             <!--  TextChanged="{Binding EditorText_Changed}"  -->
             <ImageButton
                 Grid.Column="1"
-                Grid.Row="1"
+                Grid.Row="3"
                 Margin="10"
                 Aspect="AspectFit"
                 BackgroundColor="Transparent"
@@ -347,7 +387,7 @@
 
             <ImageButton
                 Grid.Column="2"
-                Grid.Row="1"
+                Grid.Row="3"
                 Margin="10"
                 Aspect="AspectFit"
                 BackgroundColor="Transparent"
@@ -363,7 +403,7 @@
             
             <ImageButton
                 Grid.Column="2"
-                Grid.Row="1"
+                Grid.Row="3"
                 Margin="10"
                 Aspect="AspectFit"
                 BackgroundColor="Transparent"

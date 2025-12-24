@@ -284,6 +284,12 @@ namespace MauiMessenger.Services
       });
     }
 
+    public async Task<List<string>> GetAiSuggestions(Guid chatId, string draft)
+        {
+            var response = await _api.GetSuggestions...
+            return response.Select(s => s.Message).ToList();
+
+        }
 
   }
 }
