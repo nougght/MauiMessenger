@@ -36,6 +36,7 @@ namespace MauiMessenger.Services
       _appState = appState;
       _hubConnection = new HubConnectionBuilder()
           //.WithUrl("http://10.0.2.2:8080/chat")
+          //https://app.minio.ru/chat
           .WithUrl("http://127.0.0.1:8080/chat", options =>
           {
             options.AccessTokenProvider = async () =>
@@ -85,7 +86,6 @@ namespace MauiMessenger.Services
 
       _hubConnection.On <HashSet<UserStatusDto>>("ReceiveUsersStatuses", (statuses) =>
       {
-        //SendLocalMessage(message);
         OnStatusesReceived?.Invoke(statuses);
       });
 

@@ -21,8 +21,8 @@ namespace MauiMessenger
 
       builder.Services.AddHttpClient("Api", http =>
       {
-        // 127.0.0.1
-        // 10.0.2.2
+        // https://app.nought.ru
+        // 10.0.2.2:8080
         http.BaseAddress = new Uri("http://127.0.0.1:8080");
       })
 .AddHttpMessageHandler<AuthMessageHandler>();
