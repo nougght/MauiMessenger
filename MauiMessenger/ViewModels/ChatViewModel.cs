@@ -78,6 +78,7 @@ namespace MauiMessenger.ViewModels
     public bool IsSuggestionsButtonVisible => Suggestions.Count == 0;
 
     public Command AiSuggestionsClickedCommand { get; }
+    public Command UseSuggestionClickedCommand { get; }
     public Command ChatHeaderClickedCommand { get; }
     public Command PickFileCommand { get; }
     public Command RecordClickedCommand { get; }
@@ -120,6 +121,7 @@ namespace MauiMessenger.ViewModels
       //}
 
       AiSuggestionsClickedCommand = new Command(async () => await OnAiSuggestionsClicked(), () => true);
+      UseSuggestionClickedCommand = new Command<string>(async (choise) => await OnUseSuggestionClicked(choise), (choise) => true);
       ChatHeaderClickedCommand = new Command(async () => await OnChatHeaderClicked(conversation), () => true);
       PickFileCommand = new Command(async () =>
       {
@@ -147,6 +149,7 @@ namespace MauiMessenger.ViewModels
 
       ChatClosed += async (chatId, lastReadMessageId) => { await _chatService.OnChatClosed(chatId, lastReadMessageId); };
       MessageSent += () => Suggestions.Clear();
+      MessageSent += () => Files.Clear();
       Suggestions.CollectionChanged += (_, __) =>
       {
         OnPropertyChanged(nameof(IsSuggestionsVisible));
@@ -157,6 +160,7 @@ namespace MauiMessenger.ViewModels
 
     public bool IsPrivate => Conversation == default(ConversationDTO) ? false : Conversation.Type.Name == "private";
 
+    
     private void StartRecordingTimer()
     {
       RecordDuration = TimeSpan.Zero;
@@ -323,7 +327,14 @@ namespace MauiMessenger.ViewModels
       });
     }
 
-
+    private async Task OnUseSuggestionClicked(string choice)
+    {
+      await MainThread.InvokeOnMainThreadAsync(async () =>
+      {
+        Message = choice;
+        Suggestions.Clear();
+      });
+    }
     private async Task OnAiSuggestionsClicked()
     {
       var suggestions = await _chatService.GetAiSuggestions(this.Conversation.Id, this.Message);

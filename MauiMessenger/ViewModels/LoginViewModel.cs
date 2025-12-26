@@ -96,7 +96,7 @@ namespace MauiMessenger.ViewModels
       {
         ResponseError = status switch
         {
-          AuthResponseStatus.Error => "Ошибка",
+          AuthResponseStatus.Error => "Неверный пароль",
           _ => "Пользователь с таким логином не найден"
         };
       }
