@@ -1,16 +1,16 @@
 ﻿using CommunityToolkit.Mvvm;
 using CommunityToolkit.Mvvm.ComponentModel;
+using MauiMessenger.ApiClient;
 using MauiMessenger.Models;
 using MauiMessenger.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.Models
 {
@@ -20,14 +20,22 @@ namespace MauiMessenger.Models
     private readonly SignalRService _signalR;
     private readonly AppStateService _appState;
 
-    public ObservableCollection<ChatDTO> Chats { get; } = new();
+    public ObservableCollection<ConversationDTO> Conversations { get; } = new();
     public ObservableCollection<UserDTO> Users { get; } = new();
 
 
     public ObservableCollection<ContactDTO> Contacts { get; } = new();
 
+    public readonly Dictionary<Guid, ObservableCollection<ChatItem>> _chatItemsByChat = new();
+    public readonly Dictionary<Guid, List<int>> _messageIndexesByChat = new();
 
-    public async Task<UserDTO> GetUserById(Guid? userId)
+
+    public Dictionary<Guid, GroupChatDetailsDTO> GroupChatsDetails { get; } = new();
+    public Dictionary<Guid, PrivateChatDetailsDTO> PrivateChatsDetails { get; } = new();
+    public Dictionary<Guid, ChannelDetailsDTO> ChannelsDetails { get; } = new();
+
+
+    public async Task<UserDTO?> GetUser(Guid? userId)
     {
 
       var existing = Users.FirstOrDefault(u => u.UserId == userId);
@@ -55,29 +63,28 @@ namespace MauiMessenger.Models
       return Contacts.FirstOrDefault(c => c.UserId == userId);
     }
 
-    public Guid PrivateChatUserId(ChatDTO chat)
+    //public Guid PrivateChatUserId(ChatDTO chat)
+    //{
+    //  if (chat.Type.Id == PrivateTypeId)
+    //  {
+    //    return chat.Members.First(m => m.UserId != _appState.CurrentUser.UserId).UserId;
+    //  }
+    //  else
+    //  {
+    //    throw new Exception("Not private chat");
+    //  }
+    //}
+
+    public ConversationDTO? GetChatWithUser(Guid userId)
     {
-      if (chat.Type.Id == PrivateTypeId)
-      {
-        return chat.Members.First(m => m.UserId != _appState.CurrentUser.UserId).UserId;
-      }
-      else
-      {
-        throw new Exception("Not private chat");
-      }
+      var conversatonId = PrivateChatsDetails.Values.FirstOrDefault(d => d.OtherUser.UserId == userId)?.ConversationId;
+      return conversatonId != null ? GetConversation(conversatonId.Value) : null;
     }
 
-    public ChatDTO? GetChatWithUser(Guid userId)
-    {
-      return Chats.FirstOrDefault(c => c.Type.Id == PrivateTypeId && PrivateChatUserId(c) == userId);
-    }
 
 
 
-    public readonly Dictionary<Guid, ObservableCollection<ChatItem>> _chatItemsByChat = new();
-    public readonly Dictionary<Guid, List<int>> _messageIndexesByChat = new();
-
-    public ChatDTO? GetChat(Guid id) => Chats.FirstOrDefault(c => c.Id == id);
+    public ConversationDTO? GetConversation(Guid id) => Conversations.FirstOrDefault(c => c.Id == id);
 
     public async Task<ObservableCollection<ChatItem>> GetChatItems(Guid chatId)
     {
@@ -93,6 +100,61 @@ namespace MauiMessenger.Models
       }
       return items;
     }
+
+    public async Task<GroupChatDetailsDTO?> GetGroupChatDetailsAsync(Guid conversationId)
+    {
+           if (GroupChatsDetails.TryGetValue(conversationId, out var details))
+      {
+        return details;
+      }
+      else
+      {
+        if (GetConversation(conversationId)?.Type.Id != GroupTypeId)
+        {
+          return null;
+        }
+        var response = await _api.GroupGETAsync(conversationId, _appState.CurrentUser.UserId);
+        GroupChatsDetails[conversationId] = response;
+        return response;
+      }
+    }
+
+    public async Task<PrivateChatDetailsDTO?> GetPrivateChatDetailsAsync(Guid conversationId)
+    {
+      if (PrivateChatsDetails.TryGetValue(conversationId, out var details))
+      {
+        return details;
+      }
+      else
+      {
+        if (GetConversation(conversationId)?.Type.Id != PrivateTypeId)
+        {
+          return null;
+        }
+        var response = await _api.PrivateGETAsync(conversationId, _appState.CurrentUser.UserId);
+        PrivateChatsDetails[conversationId] = response;
+        return response;
+      }
+    }
+
+    public async Task<ChannelDetailsDTO?> GetChannelDetailsAsync(Guid conversationId)
+    {
+      if (ChannelsDetails.TryGetValue(conversationId, out var details))
+      {
+        return details;
+      }
+      else
+      {
+        if (GetConversation(conversationId)?.Type.Id != ChannelTypeId)
+        {
+          return null;
+        }
+        var response = await _api.ChannelGETAsync(conversationId, _appState.CurrentUser.UserId);
+        ChannelsDetails[conversationId] = response;
+        return response;
+      }
+    }
+
 
     public async Task<List<int>> GetMessageIndexes(Guid chatId)
     {
@@ -119,7 +181,7 @@ namespace MauiMessenger.Models
     public Guid PrivateTypeId { get; private set; }
     public Guid GroupTypeId { get; private set; }
 
-
+    public Guid ChannelTypeId { get; private set; }
     public static void UpdateCollection<T>(
       ObservableCollection<T> target,
       IEnumerable<T> source,
@@ -147,7 +209,7 @@ namespace MauiMessenger.Models
         var param = statuses.Select(s => UserStatus.FromUserStatusDto(s)).ToHashSet();
         _appState.UpdateUserStatuses(param);
       };
-      Chats.CollectionChanged += (a, e) =>
+      Conversations.CollectionChanged += (a, e) =>
       {
         Debug.WriteLine($"[CollectionChanged] Action = {e.Action}");
 
@@ -156,7 +218,7 @@ namespace MauiMessenger.Models
         if (e.NewItems != null)
           Debug.WriteLine($"NewItems: {e.NewItems.Count}");
 
-        foreach (var chat in Chats)
+        foreach (var chat in Conversations)
           Debug.WriteLine($"Chat: {chat.Id}, unread={chat.UnreadMessagesCount}");
 
         Debug.WriteLine("-----");
@@ -167,7 +229,7 @@ namespace MauiMessenger.Models
 
     public async Task LoadEnumsAsync()
     {
-      ChatTypes = (await _api.ChatTypesAsync()).ToDictionary().Select(p => new KeyValuePair<Guid, string>(new Guid(p.Key), p.Value)).ToDictionary();
+      ChatTypes = (await _api.ConversationTypesAsync()).ToDictionary().Select(p => new KeyValuePair<Guid, string>(new Guid(p.Key), p.Value)).ToDictionary();
       MemberRoles = (await _api.MemberRolesAsync()).ToDictionary().Select(p => new KeyValuePair<Guid, string>(new Guid(p.Key), p.Value)).ToDictionary();
 
       PrivateTypeId = ChatTypes.FirstOrDefault(r => r.Value == "private").Key;
@@ -181,7 +243,7 @@ namespace MauiMessenger.Models
       if (GroupTypeId == Guid.Empty)
         throw new InvalidOperationException("ChatType 'group' not found");
 
-
+      ChannelTypeId = ChatTypes.FirstOrDefault(r => r.Value == "channel").Key;
 
       OwnerTypeId = MemberRoles.FirstOrDefault(r => r.Value == "owner").Key;
 
@@ -206,24 +268,24 @@ namespace MauiMessenger.Models
     {
       if (_appState.CurrentUser != null)
       {
-        var userChats = (await _api.ChatsAsync(_appState.CurrentUser.UserId)).Chats;
-        Chats.Clear();
+        var userChats = (await _api.ChatsAsync(_appState.CurrentUser.UserId)).Conversations;
+        Conversations.Clear();
 
         HashSet<string> users = new();
         foreach (var chat in userChats)
         {
-          if (chat.Type.Id == PrivateTypeId)
-          {
-            chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
-          }
-          Chats.Add(chat);
-          foreach (var member in chat.Members)
-          {
-            if (member.UserId !=  _appState.CurrentUser.UserId)
-            {
-              users.Add(member.UserId.ToString());
-            }
-          }
+          //if (chat.Type.Id == PrivateTypeId)
+          //{
+          //  chat.Title = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
+          //}
+          Conversations.Add(chat);
+          //foreach (var member in chat.Members)
+          //{
+          //  if (member.UserId !=  _appState.CurrentUser.UserId)
+          //  {
+          //    users.Add(member.UserId.ToString());
+          //  }
+          //}
         }
 
         await _signalR.SendUsersStatusesRequest(users);
@@ -236,14 +298,14 @@ namespace MauiMessenger.Models
       }
     }
 
-    public async Task<ChatDTO> UpdateChatAsync(Guid chatId)
+    public async Task<ConversationDTO> UpdateChatAsync(Guid conversationId)
     {
-      var existing = GetChat(chatId);
-      var ind = Chats.IndexOf(existing);
+      var existing = GetConversation(conversationId);
+      var ind = Conversations.IndexOf(existing);
 
-      var updated = await _api.ChatGETAsync(chatId, _appState.CurrentUser.UserId);
-      updated.Name = existing.Name;
-      await MainThread.InvokeOnMainThreadAsync(() => Chats[ind] = updated);
+      var updated = await _api.ConversationGETAsync(conversationId, _appState.CurrentUser.UserId);
+      //updated.Name = existing.Name;
+      await MainThread.InvokeOnMainThreadAsync(() => Conversations[ind] = updated);
 
       //existing.Name = updated.Name;
       //existing.LastMessage = updated.LastMessage;
@@ -274,17 +336,17 @@ namespace MauiMessenger.Models
     }
 
 
-    public async Task AddChat(ChatDTO chat)
+    public async Task AddChat(ConversationDTO chat)
     {
-      if (GetChat(chat.Id) == null)
+      if (GetConversation(chat.Id) == null)
       {
-        await MainThread.InvokeOnMainThreadAsync(() => Chats.Add(chat));
+        await MainThread.InvokeOnMainThreadAsync(() => Conversations.Add(chat));
       }
 
     }
 
 
-    public async Task<List<ChatItem>> ProcessChatItems(ChatDTO chat, ICollection<MessageDTO> messages)
+    public async Task<List<ChatItem>> ProcessChatItems(ConversationDTO chat, ICollection<MessageDTO> messages)
     {
       var chatItems = new List<ChatItem>();
       var messageItems = messages.Select(m => new MessageItem
@@ -292,18 +354,19 @@ namespace MauiMessenger.Models
         Message = m,
         CreatedAt = m.CreatedAt!.Value.DateTime
       });
-      var serviceMessages = chat.Members.Where(m => m.AddedAt != chat.CreatedAt).OrderBy(m => m.AddedAt)
-          .Select(m => new ServiceMessageItem
-          {
-            Type = ChatItemType.ServiceMessage,
-            Text = $"{chat.CreatorUsername} добавил участника {m.Username}",
-            CreatedAt = m.AddedAt.DateTime
-          }).ToList();
+      //var serviceMessages = chat.Members.Where(m => m.AddedAt != chat.CreatedAt).OrderBy(m => m.AddedAt)
+      //    .Select(m => new ServiceMessageItem
+      //    {
+      //      Type = ChatItemType.ServiceMessage,
+      //      Text = $"{chat.CreatorUsername} добавил участника {m.Username}",
+      //      CreatedAt = m.AddedAt.DateTime
+      //    }).ToList();
+      var serviceMessages = new List<ServiceMessageItem>();
       if (chat.Type.Id != PrivateTypeId)
       {
         serviceMessages.Add(new ServiceMessageItem
         {
-          CreatedAt = chat.CreatedAt!.Value.DateTime,
+          CreatedAt = chat.CreatedAt.DateTime,
           Text = $"{chat.CreatorUsername} создал чат",
           Type = ChatItemType.ServiceMessage
         });
@@ -373,7 +436,7 @@ namespace MauiMessenger.Models
         }
 
       }
-        var chatItems = await ProcessChatItems(GetChat(chatId)!, response);
+        var chatItems = await ProcessChatItems(GetConversation(chatId)!, response);
 
 
 
@@ -399,14 +462,14 @@ namespace MauiMessenger.Models
 
     public async Task AddMessage(MessageDTO message)
     {
-      var chat = GetChat(message.ChatId);
+      var chat = GetConversation(message.ConversationId);
       if (chat != null)
       {
 
         await MainThread.InvokeOnMainThreadAsync(async () =>
           {
-            var chatItems = await GetChatItems(message.ChatId);
-            var indexes = await GetMessageIndexes(message.ChatId);
+            var chatItems = await GetChatItems(message.ConversationId);
+            var indexes = await GetMessageIndexes(message.ConversationId);
             if (chatItems != null)
             {
               var ind = chatItems.Count;
@@ -424,21 +487,21 @@ namespace MauiMessenger.Models
               indexes.Add(ind);
               if (message.SenderId != _appState.CurrentUser.UserId)
               {
-                var index = Chats.IndexOf(chat);
-                var updated = new ChatDTO
+                var index = Conversations.IndexOf(chat);
+                var updated = new ConversationDTO
                 {
                   Id = chat.Id,
-                  Members = chat.Members,
-                  Name = chat.Name,
+                  //Members = chat.Members,
+                  Title = chat.Title,
                   Type = chat.Type,
                   LastMessage = message,
-                  UpdatedAt = message.CreatedAt,
+                  //UpdatedAt = message.CreatedAt,
                   UnreadMessagesCount = chat.UnreadMessagesCount + 1,
                   LastReadMessageId = chat.LastReadMessageId
                 };
 
-                Chats.RemoveAt(index);
-                Chats.Insert(index, updated);
+                Conversations.RemoveAt(index);
+                Conversations.Insert(index, updated);
               }
               {
                 // event messages changed
@@ -459,10 +522,10 @@ namespace MauiMessenger.Models
 
     public async Task UpdateMessage(MessageDTO updated, Guid oldId)
     {
-      var chat = GetChat(updated.ChatId);
+      var chat = GetConversation(updated.ConversationId);
       if (chat != null)
       {
-        var chatItems = await GetChatItems(updated.ChatId);
+        var chatItems = await GetChatItems(updated.ConversationId);
         var existing = chatItems.FirstOrDefault(m => m is MessageItem msg && msg.Message.Id == oldId);
         if (existing != null)
         {
@@ -533,7 +596,7 @@ namespace MauiMessenger.Models
               Message = new MessageDTO
               {
                 Id = old.Id,
-                ChatId = old.ChatId,
+                ConversationId = old.ConversationId,
                 SenderId = old.SenderId,
                 Content = old.Content,
                 CreatedAt = old.CreatedAt,
@@ -581,7 +644,7 @@ namespace MauiMessenger.Models
               Message = new MessageDTO
               {
                 Id = old.Id,
-                ChatId = old.ChatId,
+                ConversationId = old.ConversationId,
                 SenderId = old.SenderId,
                 Content = old.Content,
                 CreatedAt = old.CreatedAt,
@@ -603,17 +666,17 @@ namespace MauiMessenger.Models
     // use to update current users chat read position when chat closed
     public async Task UpdateChatReadPosition(Guid chatId, Guid lastReadMessageId, int updatedMessagesCount)
     {
-      var chat = GetChat(chatId);
-      var index = Chats.IndexOf(chat);
+      var chat = GetConversation(chatId);
+      var index = Conversations.IndexOf(chat);
 
-      Chats[index] = new ChatDTO
+      Conversations[index] = new ConversationDTO
       {
         Id = chat.Id,
-        Members = chat.Members,
-        Name = chat.Name,
+        //Members = chat.Members,
+        Title = chat.Title,
         Type = chat.Type,
         LastMessage = chat.LastMessage,
-        UpdatedAt = chat.UpdatedAt,
+        //UpdatedAt = chat.UpdatedAt,
         UnreadMessagesCount = chat.UnreadMessagesCount < updatedMessagesCount ? 0 : chat.UnreadMessagesCount - updatedMessagesCount,
         LastReadMessageId = lastReadMessageId
       };

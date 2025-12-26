@@ -19,7 +19,7 @@ namespace MauiMessenger.Services
     private UserDTO? currentUser;
 
     [ObservableProperty]
-    private ChatDTO? selectedChat;
+    private ConversationDTO? selectedChat;
 
 
     public ObservableCollection<UserStatus> Statuses { get;} = new();

@@ -21,7 +21,7 @@ namespace MauiMessenger.ViewModels
     private readonly AppStateService _appState;
 
     [ObservableProperty]
-    private ChatDTO chat;
+    private ConversationDTO chat;
 
 
     public Command ChatMemberClickedCommand { get; }
@@ -37,7 +37,7 @@ namespace MauiMessenger.ViewModels
       //this.Chat = chat;
 
       ChatMemberClickedCommand = new Command<Guid>(async (userId) =>
-        await NavigationService.GoToUserPageAsync(await _data.GetUserById(userId)), (userId) => true);
+        await NavigationService.GoToUserPageAsync(await _data.GetUser(userId)), (userId) => true);
       BackButtonClickedCommand = new Command(async () => await NavigationService.GoBackAsync());
 
     }

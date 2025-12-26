@@ -58,7 +58,7 @@
                                             Margin="10,0,0,0"
                                             FontSize="30"
                                             HorizontalOptions="FillAndExpand"
-                                            Text="{Binding Name}"
+                                            Text="{Binding Title}"
                                             VerticalOptions="Center" />
                                 <Label FontSize="15" Text="{Binding LastMessage.Content}" />
                             </VerticalStackLayout>

@@ -33,10 +33,10 @@ namespace MauiMessenger.ViewModels
       // trying without mainthread invoke
       _signalR.OnChatCreated += async chat =>
       {
-        if (chat.Type.Id == _data.PrivateTypeId)
-        {
-          chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
-        }
+        //if (chat.Type.Id == _data.PrivateTypeId)
+        //{
+        //  chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
+        //}
         await _data.AddChat(chat);
 
       };

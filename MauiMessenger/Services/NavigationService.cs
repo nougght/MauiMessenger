@@ -15,18 +15,20 @@ namespace MauiMessenger.Services
   public static class NavigationService
   {
 
-    public static async Task GoToChatAsync(ChatDTO chat, ObservableCollection<ChatItem> chatItems, List<int> indexes)
+    public static async Task GoToChatAsync(ConversationDTO chat, ObservableCollection<ChatItem> chatItems, List<int> indexes, 
+      GroupChatDetailsDTO? groupDetails = null, PrivateChatDetailsDTO? privateDetails = null, ChannelDetailsDTO? channelDetails = null)
     {
-
       var chatVm = Ioc.Default.GetRequiredService<ChatViewModel>();
       await MainThread.InvokeOnMainThreadAsync(() =>
       {
-        chatVm.Chat = chat;
+        chatVm.Conversation = chat;
         chatVm.ChatItems = chatItems;
         chatVm.Indexes = indexes;
         chatVm.LastReadMessageId = chat.LastReadMessageId;
         chatVm.LastReadMessageIndex = chatItems.IndexOf(chatItems.FirstOrDefault(x => x is MessageItem msg && msg.Message.Id == chat.LastReadMessageId));
-        
+        chatVm.GroupChatDetails = groupDetails;
+        chatVm.PrivateChatDetails = privateDetails;
+        chatVm.ChannelDetails = channelDetails;
       });
 
       var page = new ChatPage(chatVm);
@@ -48,7 +50,7 @@ namespace MauiMessenger.Services
       await Shell.Current.GoToAsync(nameof(UserPage), true, param);
     }
 
-    public static async Task GoToChatInfoPageAsync(ChatDTO chat)
+    public static async Task GoToChatInfoPageAsync(ConversationDTO chat)
     {
       var param = new ShellNavigationQueryParameters
       {

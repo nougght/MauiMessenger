@@ -39,7 +39,7 @@ namespace MauiMessenger.Services
         var tmp = new MessageDTO
         {
           Id = Guid.NewGuid(),
-          ChatId = chatId,
+          ConversationId = chatId,
           SenderId = _appState.CurrentUser.UserId,
           Content = text,
           CreatedAt = DateTime.Now,
@@ -55,7 +55,7 @@ namespace MauiMessenger.Services
                 Id = Guid.NewGuid()
               }
             } :
-          files.Select(f => new MessageFileDTO {FileType = f.ContentType, FileKey = "", FileName = "file", Id = Guid.NewGuid() }).ToList()
+          files.Select(f => new MessageFileDTO { FileType = f.ContentType, FileKey = "", FileName = "file", Id = Guid.NewGuid() }).ToList()
         };
 
 
@@ -65,14 +65,14 @@ namespace MauiMessenger.Services
           {
 
             await _data.AddMessage(tmp);
-            await _data.UpdateChatAsync(tmp.ChatId);
+            await _data.UpdateChatAsync(tmp.ConversationId);
           }
         );
 
         var msg = new CreateMessageRequest
         {
-          Message = text ,
-          ChatId = chatId,
+          Message = text,
+          ConversationId = chatId,
           UserId = _appState.CurrentUser.UserId
         };
 
@@ -137,7 +137,7 @@ namespace MauiMessenger.Services
         MainThread.BeginInvokeOnMainThread(async () =>
         {
           await _data.UpdateMessage(response, tmp.Id);
-          await _data.UpdateChatAsync(tmp.ChatId);
+          await _data.UpdateChatAsync(tmp.ConversationId);
 
         }
         );
@@ -154,8 +154,8 @@ namespace MauiMessenger.Services
       //IsBusy = false;
     }
 
-    public ChatDTO? GetChat(Guid chatId) => _data.GetChat(chatId);
-    public ObservableCollection<ChatDTO> GetChats() => _data.Chats;
+    public ConversationDTO? GetConversation(Guid chatId) => _data.GetConversation(chatId);
+    public ObservableCollection<ConversationDTO> GetConversations() => _data.Conversations;
     public async Task<ObservableCollection<ChatItem>> GetChatItems(Guid chatId) => await _data.GetChatItems(chatId);
     public async Task<List<int>> GetMessageIndexes(Guid chatId) => await _data.GetMessageIndexes(chatId);
 
@@ -170,7 +170,7 @@ namespace MauiMessenger.Services
     public Guid PrivateTypeId { get => _data.PrivateTypeId; }
     public Guid GroupTypeId { get => _data.GroupTypeId; }
 
-    public async Task<ChatDTO> GetOrCreateChatAsync(Guid userId)
+    public async Task<ConversationDTO> GetOrCreateChatAsync(Guid userId)
     {
       var chat = _data.GetChatWithUser(userId);
       if (chat == null)
@@ -181,26 +181,20 @@ namespace MauiMessenger.Services
     }
 
 
-    public async Task<ChatDTO> CreatePrivateChat(Guid userId)
+    public async Task<ConversationDTO> CreatePrivateChat(Guid userId)
     {
       var existing = _data.GetChatWithUser(userId);
       if (existing == null)
       {
-        var chat = await _api.ChatPOSTAsync(
-          new CreateChatRequest
+        var chat = await _api.PrivatePOSTAsync(
+          new CreatePrivateChatRequest
           {
-            Name = "",
-            Type = _data.PrivateTypeId,
             CreatedBy = _appState.CurrentUser.UserId,
-            Members = new List<CreateMemberRequest>
-            {
-              new CreateMemberRequest { UserId = _appState.CurrentUser.UserId, Role = _data.MemberTypeId},
-              new CreateMemberRequest { UserId = userId, Role = _data.MemberTypeId }
-            }
+            OtherUserId = userId
           }
         );
 
-        chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
+        //chat.Name = chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)?.Username ?? "Чат";
         await _data.AddChat(chat);
 
 
@@ -213,20 +207,41 @@ namespace MauiMessenger.Services
       }
     }
 
-    public async Task<ChatDTO> CreateGroupChat(IEnumerable<UserDTO> users, string name)
+    public async Task<ConversationDTO> CreateGroupChat(IEnumerable<UserDTO> users, string name, string? description)
     {
 
       var members = users.Select(u => new CreateMemberRequest { UserId = u.UserId, Role = _data.MemberTypeId }).ToList();
       members.Add(new CreateMemberRequest { UserId = _appState.CurrentUser.UserId, Role = _data.OwnerTypeId });
 
-      var chat = await _api.ChatPOSTAsync(
+      var chat = await _api.GroupPOSTAsync(
 
-        new CreateChatRequest
+        new CreateGroupChatRequest
         {
-          Name = name,
-          Type = _data.GroupTypeId,
+          Title = name,
+          Description = description,
           CreatedBy = _appState.CurrentUser.UserId,
           Members = members
+        }
+
+      );
+
+      await _data.AddChat(chat);
+      await _signalR.NotifyChatCreated(chat.Id);
+      return chat;
+    }
+
+
+    public async Task<ConversationDTO> CreateChannel(IEnumerable<UserDTO> users, string name, string? description)
+    {
+
+      var chat = await _api.ChannelPOSTAsync(
+
+        new CreateChannelRequest
+        {
+          Title = name,
+          Description = description,
+          CreatedBy = _appState.CurrentUser.UserId,
+          OwnerId = _appState.CurrentUser.UserId
         }
 
       );
@@ -276,7 +291,7 @@ namespace MauiMessenger.Services
       await MainThread.InvokeOnMainThreadAsync(async () =>
       {
         // updating local chat read position
-        var chat = GetChat(chatId);
+        var chat = GetConversation(chatId);
         var oldReadPositionId = chat.Id;
 
         var updatedCount = await _data.UpdateMessageReadStatuses(chatId, oldReadPositionId, lastReadMessageId!.Value);
@@ -285,11 +300,26 @@ namespace MauiMessenger.Services
     }
 
     public async Task<List<string>> GetAiSuggestions(Guid chatId, string draft)
-        {
-            var response = await _api.GetSuggestions...
-            return response.Select(s => s.Message).ToList();
+    {
+      var response = await _api.AiSuggestsAsync(userId: _appState.CurrentUser.UserId, chatId: chatId, responseText: draft);
+      return response.Messages.ToList();
 
-        }
+    }
 
+
+    public async Task<PrivateChatDetailsDTO?> GetPrivateChatDetailsAsync(Guid chatId)
+    {
+      return await _data.GetPrivateChatDetailsAsync(chatId);
+    }
+
+    public async Task<GroupChatDetailsDTO?> GetGroupChatDetailsAsync(Guid chatId)
+    {
+      return await _data.GetGroupChatDetailsAsync(chatId);
+    }
+
+    public async Task<ChannelDetailsDTO?> GetChannelDetailsAsync(Guid chatId)
+    {
+      return await _data.GetChannelDetailsAsync(chatId);
+    }
   }
 }

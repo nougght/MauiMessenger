@@ -284,7 +284,7 @@
 
         <!--  Панель ввода сообщения  -->
 
-        <Grid Grid.Row="2" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto">
+        <Grid Grid.Row="2" ColumnDefinitions="*, Auto, Auto" RowDefinitions="Auto, Auto, Auto, Auto">
             <CollectionView ItemsSource="{Binding Files}" 
                     SelectionMode="None"
                     Grid.Row="0"
@@ -316,12 +316,14 @@
                 Text="ИИ-подсказки"
                 IsVisible="{Binding IsSuggestionsButtonVisible}"
                 Command="{Binding AiSuggestionsClickedCommand}"/>
+            
             <CollectionView 
                 x:Name="SuggestionsView"
                 ItemsSource="{Binding Suggestions}"
                 Grid.Row="1"
                 Grid.Column="0"
                 SelectionMode="None"
+                IsVisible="{Binding IsSuggestionsVisible}"
                 HorizontalScrollBarVisibility="Never"
                 ItemsLayout="HorizontalList"
                 

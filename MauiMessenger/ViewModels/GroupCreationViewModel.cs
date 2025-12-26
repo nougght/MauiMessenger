@@ -71,7 +71,7 @@ namespace MauiMessenger.ViewModels
     public async Task OnCreateGroupChat()
     {
       ClosePopupRequest?.Invoke();
-      var chat = await _chatService.CreateGroupChat(SelectedGroupMembers.OfType<UserDTO>(), GroupName);
+      var chat = await _chatService.CreateGroupChat(SelectedGroupMembers.OfType<UserDTO>(), GroupName, null);
       //await NavigationService.GoToChatAsync(chat);
     }
   }

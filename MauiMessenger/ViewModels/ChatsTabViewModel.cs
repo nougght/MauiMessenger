@@ -21,7 +21,7 @@ namespace MauiMessenger.ViewModels
 
     private IPopupService _popupService { get; set; }
 
-    public ObservableCollection<ChatDTO> Chats { get; set; }
+    public ObservableCollection<ConversationDTO> Chats { get; set; }
 
 
     public Command ChatClickedCommand { get; set; }
@@ -43,7 +43,7 @@ namespace MauiMessenger.ViewModels
 
       _popupService = new PopupService();
 
-      Chats = chatService.GetChats();
+      Chats = chatService.GetConversations();
 
       ChatClickedCommand = new Command<Guid>(async (chatId) => await OnChatClicked(chatId), (chatId) => true);
       ToNewPrivateChatPageCommand = new Command(
@@ -58,10 +58,13 @@ namespace MauiMessenger.ViewModels
     private async Task OnChatClicked(Guid chatId)
     {
       IsBusy = true;
-      var chat = _chatService.GetChat(chatId);
+      var chat = _chatService.GetConversation(chatId);
       await _chatService.LoadMessagesAsync(chatId);
+
       IsBusy = false;
-      await NavigationService.GoToChatAsync(chat, await _chatService.GetChatItems(chat.Id), await _chatService.GetMessageIndexes(chat.Id));
+      await NavigationService.GoToChatAsync(chat, await _chatService.GetChatItems(chat.Id), await _chatService.GetMessageIndexes(chat.Id),
+        privateDetails: await _chatService.GetPrivateChatDetailsAsync(chatId), groupDetails: await _chatService.GetGroupChatDetailsAsync(chatId),
+        channelDetails: await _chatService.GetChannelDetailsAsync(chatId));
       // go to chat page
 
     }

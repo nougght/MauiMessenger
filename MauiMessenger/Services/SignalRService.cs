@@ -25,7 +25,7 @@ namespace MauiMessenger.Services
     public event Action<MessageDTO>? OnMessageReceived;
     public event Action<HashSet<UserStatusDto>>? OnStatusesReceived;
 
-    public event Action<ChatDTO>? OnChatCreated;
+    public event Action<ConversationDTO>? OnChatCreated;
 
     public event Action<Guid, Guid, Guid, DateTime>? OnUpdateReadStatuses;
 
@@ -71,7 +71,7 @@ namespace MauiMessenger.Services
       });
 
       _hubConnection.Remove("ChatCreated");
-      _hubConnection.On<ChatDTO>("ChatCreated", (chat) =>
+      _hubConnection.On<ConversationDTO>("ChatCreated", (chat) =>
       {
         //AddLocalChat(chat);
         OnChatCreated?.Invoke(chat);
