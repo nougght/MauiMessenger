@@ -3,19 +3,21 @@
     x:Class="MauiMessenger.Views.ChatsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:MauiMessenger.Views"
     Title="ChatsPage">
 
     <Grid
         BackgroundColor="Transparent"
         ColumnDefinitions="*"
-        RowDefinitions="*, Auto"
+        RowDefinitions="Auto, *, Auto"
         RowSpacing="0">
         <ActivityIndicator
             HorizontalOptions="CenterAndExpand"
             IsRunning="{Binding IsBusy}"
             IsVisible="{Binding IsBusy}" />
+        <local:TopBar Grid.Row="0" x:Name="TopBar"/>
         <CollectionView
-            Grid.Row="0"
+            Grid.Row="1"
             Margin="0"
             BackgroundColor="Transparent"
             ItemsSource="{Binding Chats}">
@@ -39,18 +41,19 @@
                                     BackgroundColor="Transparent"
                                     ColumnDefinitions="Auto, Auto, *">
                             <Border
-                                        Grid.Row="0"
-                                        Grid.Column="1"
-                                        Margin="10"
-                                        HorizontalOptions="Center"
-                                        StrokeShape="RoundRectangle 80,80,80,80"
-                                        StrokeThickness="0">
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Margin="10"
+                                HorizontalOptions="Center"
+                                StrokeShape="RoundRectangle 80,80,80,80"
+                                StrokeThickness="0"
+                                BackgroundColor="Gray">
                                 <Image
-                                            Aspect="AspectFit"
-                                            HorizontalOptions="Center"
-                                            SemanticProperties.Description="Cute dot net bot waving hi to you!"
-                                            Source="image.png"
-                                            VerticalOptions="Center" />
+                                    Aspect="AspectFit"
+                                    Margin="5"
+                                    HorizontalOptions="Center"
+                                    Source="photo.png"
+                                    VerticalOptions="Center" />
                             </Border>
                             <VerticalStackLayout Grid.Row="0" Grid.Column="2">
 
@@ -78,7 +81,7 @@
             </CollectionView.ItemTemplate>
         </CollectionView>
         <Button
-            Grid.Row="1"
+            Grid.Row="2"
             Margin="10"
             Command="{Binding ToGroupCreationPopupCommand}"
             HorizontalOptions="Start"
@@ -86,7 +89,7 @@
             Text="Создать группу"
             VerticalOptions="End" />
         <Button
-            Grid.Row="1"
+            Grid.Row="2"
             Margin="10"
             Command="{Binding ToNewPrivateChatPageCommand}"
             HorizontalOptions="End"

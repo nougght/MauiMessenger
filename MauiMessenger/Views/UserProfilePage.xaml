@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiMessenger.Views.UserProfilePage"
+             Title="UserProfilePage">
+
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False" />
+    </Shell.BackButtonBehavior>
+    <Grid BackgroundColor="Transparent" RowDefinitions="60, Auto">
+
+        <ImageButton
+        Grid.Row="0"
+        Grid.Column="0"
+        Margin="10"
+        Aspect="AspectFill"
+        BackgroundColor="Transparent"
+        Command="{Binding BackButtonClickedCommand}"
+        HorizontalOptions="Start"
+        Source="back.png"
+        VerticalOptions="Center"
+        WidthRequest="40" />
+
+        <Grid
+        Grid.Row="1"
+        Grid.Column="0"
+        ColumnSpacing="0"
+        Margin="10,10"
+        RowDefinitions="200, Auto, Auto, Auto"
+        ColumnDefinitions="Auto, 60"
+        HorizontalOptions="FillAndExpand"
+        VerticalOptions="FillAndExpand">
+
+            <Border
+            Grid.Row="0"
+            Margin="10, 10, 0, 10"
+            HorizontalOptions="Start"
+            StrokeShape="RoundRectangle 100, 100, 100, 100"
+            StrokeThickness="0"
+            VerticalOptions="Center"
+            BackgroundColor="Gray">
+                <Image
+                    Grid.Row="0"
+                    Aspect="AspectFit"
+                    HorizontalOptions="Center"
+                    Source="{Binding AvatarURL}"
+                    VerticalOptions="Start" >
+                    <Image.Triggers>
+                        <DataTrigger TargetType="Image" Binding="{Binding AvatarURL}" Value="">
+                            <Setter Property="Source" Value="photo.png"/>
+                        </DataTrigger>
+                        <DataTrigger TargetType="Image" Binding="{Binding AvatarURL}" Value="{x:Null}">
+                            <Setter Property="Source" Value="photo.png"/>
+                        </DataTrigger>
+                    </Image.Triggers>
+                </Image>
+            </Border>
+
+            <ImageButton
+            Grid.Row="0"
+            Grid.Column="1"
+            Margin="10, 10, 10, 20"
+            Aspect="AspectFit"
+            BackgroundColor="Transparent"
+            Command="{Binding ChangeAvatarClickedCommand}"
+            HorizontalOptions="Start"
+            VerticalOptions="Center"
+            Source="add_photo_dark.png"
+            WidthRequest="40" />
+
+            <Label
+            Grid.Row="1"
+            FontSize="30"
+            HorizontalOptions="Start"
+            Text="{Binding User.Username}"
+            VerticalOptions="End" />
+            <Label
+            Grid.Row="2"
+            FontSize="30"
+            HorizontalOptions="Start"
+            Text="{Binding User.Email}"
+            VerticalOptions="End" />
+            <Button
+            Grid.Row="3"
+            FontSize="30"
+            Text="Изменить"/>
+        </Grid>
+
+
+    </Grid>
+</ContentPage>

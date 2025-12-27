@@ -15,7 +15,7 @@ namespace MauiMessenger.Services
   public static class NavigationService
   {
 
-    public static async Task GoToChatAsync(ConversationDTO chat, ObservableCollection<ChatItem> chatItems, List<int> indexes, 
+    public static async Task GoToChatAsync(ConversationDTO chat, ObservableCollection<ChatItem> chatItems, List<int> indexes,
       GroupChatDetailsDTO? groupDetails = null, PrivateChatDetailsDTO? privateDetails = null, ChannelDetailsDTO? channelDetails = null)
     {
       var chatVm = Ioc.Default.GetRequiredService<ChatViewModel>();
@@ -41,6 +41,10 @@ namespace MauiMessenger.Services
       //await Shell.Current.GoToAsync(nameof(ChatPage), param);
     }
 
+    public static async Task GoToUserProfileAsync()
+    {
+      await Shell.Current.GoToAsync(nameof(UserProfilePage), true);
+    }
     public static async Task GoToUserPageAsync(UserDTO user)
     {
       var param = new ShellNavigationQueryParameters
@@ -50,11 +54,12 @@ namespace MauiMessenger.Services
       await Shell.Current.GoToAsync(nameof(UserPage), true, param);
     }
 
-    public static async Task GoToChatInfoPageAsync(ConversationDTO chat)
+    public static async Task GoToChatInfoPageAsync(ConversationDTO chat, GroupChatDetailsDTO details)
     {
       var param = new ShellNavigationQueryParameters
       {
-        { "Chat", chat }
+        { "Chat", chat },
+        { "GroupDetails", details }
       };
       await Shell.Current.GoToAsync(nameof(ChatInfoPage), true, param);
     }

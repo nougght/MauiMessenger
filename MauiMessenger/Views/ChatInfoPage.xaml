@@ -37,19 +37,21 @@
                 HorizontalOptions="Center"
                 StrokeShape="RoundRectangle 100, 100, 100, 100"
                 StrokeThickness="0"
-                VerticalOptions="Center">
+                VerticalOptions="Center"
+                BackgroundColor="Gray">
                 <Image
                     Grid.Row="0"
+                    Margin="5"
                     Aspect="AspectFit"
                     HorizontalOptions="Center"
-                    Source="image.png"
+                    Source="photo.png"
                     VerticalOptions="Start" />
             </Border>
             <Label
                 Grid.Row="1"
                 FontSize="30"
                 HorizontalOptions="Center"
-                Text="{Binding Chat.Name}"
+                Text="{Binding Conversation.Title}"
                 VerticalOptions="End" />
         </Grid>
         <Border Grid.Row="2" StrokeShape="Rectangle">
@@ -58,7 +60,7 @@
                     Margin="30,5"
                     FontSize="25"
                     Text="Участники" />
-                <CollectionView BackgroundColor="Transparent" ItemsSource="{Binding Chat.Members}">
+                <CollectionView BackgroundColor="Transparent" ItemsSource="{Binding GroupDetails.Members}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Border
@@ -85,12 +87,13 @@
                                         Margin="10"
                                         HorizontalOptions="Center"
                                         StrokeShape="RoundRectangle 80,80,80,80"
-                                        StrokeThickness="0">
+                                        StrokeThickness="0"
+                                        BackgroundColor="Gray">
                                         <Image
                                             Aspect="AspectFit"
                                             HorizontalOptions="Center"
-                                            SemanticProperties.Description="Cute dot net bot waving hi to you!"
-                                            Source="image.png"
+                                            Margin="5"
+                                            Source="photo.png"
                                             VerticalOptions="Center" />
                                     </Border>
                                     <VerticalStackLayout

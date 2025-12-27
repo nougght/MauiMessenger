@@ -28,7 +28,6 @@ namespace MauiMessenger.Services
     public async Task InitSession(string accessToken, string refreshToken, UserDTO user)
     {
       await _appState.SetSession(accessToken, refreshToken, user);
-
       await _signalR.Connect();
       await _signalR.RegisterInHub(user.UserId);
       await _data.LoadChatsAsync();

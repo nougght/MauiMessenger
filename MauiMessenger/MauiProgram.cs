@@ -1,15 +1,16 @@
 ﻿using CommunityToolkit.Maui;
 using CommunityToolkit.Mvvm.DependencyInjection;
-
+using MauiMessenger.ApiClient;
 using MauiMessenger.Models;
 using MauiMessenger.Services;
-using MauiMessenger.ApiClient;
-
 using MauiMessenger.ViewModels;
 using MauiMessenger.Views;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Syncfusion.Maui.Core.Hosting;
+using Syncfusion.Maui.ImageEditor;
+
 
 namespace MauiMessenger
 {
@@ -62,6 +63,8 @@ namespace MauiMessenger
       builder.Services.AddTransient<GroupCreationPopup>();
 
 
+      builder.Services.AddTransient<TopBarViewModel>();
+      builder.Services.AddTransient<UserProfileViewModel>();
       builder.Services.AddTransient<RegisterViewModel>();
       builder.Services.AddTransient<CodeVerificationViewModel>();
       builder.Services.AddTransient<LoginViewModel>();
@@ -73,6 +76,10 @@ namespace MauiMessenger
 
       builder.Logging.AddDebug();
       //builder.Logging.add
+
+
+      builder.ConfigureSyncfusionCore();
+
       var app = builder.Build();
 
       // 🧠 Важно: подключаем DI к CommunityToolkit

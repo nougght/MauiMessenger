@@ -33,19 +33,21 @@
                 HorizontalOptions="Center"
                 StrokeShape="RoundRectangle 100, 100, 100, 100"
                 StrokeThickness="0"
-                VerticalOptions="Center">
+                VerticalOptions="Center"
+                BackgroundColor="Gray">
                 <Image
                     Grid.Row="0"
+                    Margin="10"
                     Aspect="AspectFit"
                     HorizontalOptions="Center"
-                    Source="image.png"
+                    Source="photo.png"
                     VerticalOptions="Start" />
             </Border>
             <Label
                 Grid.Row="1"
                 FontSize="30"
                 HorizontalOptions="Center"
-                Text="{Binding User.Name}"
+                Text="{Binding User.Username}"
                 VerticalOptions="End" />
         </Grid>
 

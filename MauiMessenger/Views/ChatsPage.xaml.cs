@@ -15,7 +15,7 @@ public partial class ChatsPage : ContentPage
   protected override async void OnAppearing()
   {
     base.OnAppearing();
-
+    TopBar.OnAppearing();
   }
 
   //private void OnChatClicked(Guid chatId)

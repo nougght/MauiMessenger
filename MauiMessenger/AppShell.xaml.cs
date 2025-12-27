@@ -8,9 +8,9 @@ namespace MauiMessenger
     {
 
 #if WINDOWS || MACCATALYST
-    FlyoutBehavior = FlyoutBehavior.Locked; // боковое меню
+      FlyoutBehavior = FlyoutBehavior.Flyout; 
 #else
-      FlyoutBehavior = FlyoutBehavior.Disabled; // только TabBar
+      FlyoutBehavior = FlyoutBehavior.Disabled;
 #endif
       InitializeComponent();
 
@@ -26,7 +26,7 @@ namespace MauiMessenger
               Content = IPlatformApplication.Current.Services.GetService<ChatsPage>()
             }
           },
-          Route="Chats"
+          Route = "Chats"
         }
       );
 
@@ -64,6 +64,7 @@ namespace MauiMessenger
       Routing.RegisterRoute(nameof(ChatPage), typeof(ChatPage));
       Routing.RegisterRoute(nameof(ChatInfoPage), typeof(ChatInfoPage));
       Routing.RegisterRoute(nameof(UserPage), typeof(UserPage));
+      Routing.RegisterRoute(nameof(UserProfilePage), typeof(UserProfilePage));
       Routing.RegisterRoute(nameof(SearchPage), typeof(SearchPage));
       //Routing.RegisterRoute(nameof(), typeof());
     }

@@ -89,8 +89,8 @@ namespace MauiMessenger.ViewModels
 
     public Guid? LastReadMessageId;
 
-
-    public UserStatus? Status { get; set; }
+    [ObservableProperty]
+    private UserStatus? status;
 
     public string StatusText { get; set; } = "";
 
@@ -122,7 +122,7 @@ namespace MauiMessenger.ViewModels
 
       AiSuggestionsClickedCommand = new Command(async () => await OnAiSuggestionsClicked(), () => true);
       UseSuggestionClickedCommand = new Command<string>(async (choise) => await OnUseSuggestionClicked(choise), (choise) => true);
-      ChatHeaderClickedCommand = new Command(async () => await OnChatHeaderClicked(conversation), () => true);
+      ChatHeaderClickedCommand = new Command(async () => await OnChatHeaderClicked(conversation, groupChatDetails), () => true);
       PickFileCommand = new Command(async () =>
       {
         await OnPickFileAsync();
@@ -230,13 +230,19 @@ namespace MauiMessenger.ViewModels
     //  }
     //}
 
-    partial void OnConversationChanged(ConversationDTO value)
+    partial void OnPrivateChatDetailsChanged(PrivateChatDetailsDTO? value)
     {
       MainThread.BeginInvokeOnMainThread(async () =>
       {
-        if (IsPrivate)
+        if (IsPrivate && privateChatDetails != null)
         {
-          //Status = _appState.GetUserStatusById(Chat.Members.FirstOrDefault(m => m.UserId != _appState.CurrentUser.UserId)!.UserId);
+          Status = _appState.GetUserStatusById(value.OtherUser.UserId);
+          if (Status == null)
+          {
+            await _data.LoadUserStatuseseAsync(new List<Guid> { value.OtherUser.UserId });
+            Status = _appState.GetUserStatusById(value.OtherUser.UserId);
+
+          }
         }
       });
     }
@@ -349,18 +355,18 @@ namespace MauiMessenger.ViewModels
       });
 
     }
-    private async Task OnChatHeaderClicked(ConversationDTO chat)
+    private async Task OnChatHeaderClicked(ConversationDTO chat, GroupChatDetailsDTO details)
     {
       if (chat.Type.Id == _chatService.GroupTypeId)
       {
         // go to chat page
-        //await NavigationService.GoToChatInfoPageAsync(chat);
+        await NavigationService.GoToChatInfoPageAsync(chat, details);
       }
       else
       {
         // go to user page
-        //var user = await _data.GetUserById(_data.PrivateChatUserId(chat));
-        //await NavigationService.GoToUserPageAsync(user);
+        var user = await _data.GetUser(privateChatDetails.OtherUser.UserId);
+        await NavigationService.GoToUserPageAsync(user);
       }
 
     }

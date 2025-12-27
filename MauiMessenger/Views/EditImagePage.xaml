@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiMessenger.Views.EditImagePage"
+             xmlns:imageEditor="clr-namespace:Syncfusion.Maui.ImageEditor;assembly=Syncfusion.Maui.ImageEditor"
+             Title="EditImagePage">
+    <Grid BackgroundColor="Transparent" RowDefinitions="60, *, Auto">
+
+        <ImageButton
+            Grid.Row="0"
+            Grid.Column="0"
+            Margin="10"
+            Aspect="AspectFill"
+            BackgroundColor="Transparent"
+            Command="{Binding BackButtonClickedCommand}"
+            HorizontalOptions="Start"
+            Source="back.png"
+            VerticalOptions="Center"
+            WidthRequest="40" />
+        <imageEditor:SfImageEditor
+            Grid.Row="1"
+            x:Name="ImageEditor"
+            Source="{Binding Image}"
+            VerticalOptions="FillAndExpand"/>
+
+        <Button Grid.Row="2" Text="Сохранить" Clicked="OnSaveClicked"/>
+    </Grid>
+</ContentPage>

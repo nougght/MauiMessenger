@@ -12,7 +12,8 @@ using MauiMessenger.ApiClient;
 namespace MauiMessenger.ViewModels
 {
 
-  [QueryProperty(nameof(Chat), "Chat")]
+  [QueryProperty(nameof(Conversation), "Conversation")]
+  [QueryProperty(nameof(GroupDetails), "GroupDetails")]
   public partial class ChatInfoViewModel : BaseViewModel
   {
     private readonly ChatService _chatService;
@@ -21,7 +22,10 @@ namespace MauiMessenger.ViewModels
     private readonly AppStateService _appState;
 
     [ObservableProperty]
-    private ConversationDTO chat;
+    private ConversationDTO conversation;
+
+    [ObservableProperty]
+    private GroupChatDetailsDTO groupDetails;
 
 
     public Command ChatMemberClickedCommand { get; }

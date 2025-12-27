@@ -26,9 +26,9 @@ namespace MauiMessenger.Models
 
     public ObservableCollection<ContactDTO> Contacts { get; } = new();
 
-    public readonly Dictionary<Guid, ObservableCollection<ChatItem>> _chatItemsByChat = new();
-    public readonly Dictionary<Guid, List<int>> _messageIndexesByChat = new();
-
+    private readonly Dictionary<Guid, ObservableCollection<ChatItem>> _chatItemsByChat = new();
+    private readonly Dictionary<Guid, List<int>> _messageIndexesByChat = new();
+    private readonly Dictionary<string, string> _avatarURLs = new();
 
     public Dictionary<Guid, GroupChatDetailsDTO> GroupChatsDetails { get; } = new();
     public Dictionary<Guid, PrivateChatDetailsDTO> PrivateChatsDetails { get; } = new();
@@ -48,6 +48,49 @@ namespace MauiMessenger.Models
       return existing;
     }
 
+    public async Task<string> UpdateAvatarAsync(Guid ownerId, string ownerType, string contentType, Stream stream)
+    {
+      var fileResp = await _api.AvatarUrlPOSTAsync(
+        new PostAvatarRequest
+        {
+          OwnerId = ownerId,
+          OwnerType = ownerType,
+          FileType = contentType
+        });
+
+
+      // uploading file to s3
+      using (var httpClient = new HttpClient())
+      {
+        var putRequest = new HttpRequestMessage(HttpMethod.Put, fileResp.PutUrl)
+        {
+          Content = new StreamContent(stream)
+        };
+        putRequest.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        var putResponse = await httpClient.SendAsync(putRequest);
+        putResponse.EnsureSuccessStatusCode();
+      }
+      var getUrl = await _api.PresignedUrlGETAsync(fileResp.OwnerId.ToString());
+      _avatarURLs[ownerId.ToString()] = getUrl;
+      return getUrl;
+    }
+
+    public async Task<string> GetAvatarURLAsync(string fileKey)
+    {
+      if (_avatarURLs.TryGetValue(fileKey, out var url))
+      {
+        return url;
+      }
+      else
+      {
+        var response = await _api.AvatarUrlGETAsync(fileKey);
+        if (!string.IsNullOrEmpty(response))
+        {
+          _avatarURLs[fileKey] = response;
+        }
+        return response;
+      }
+    }
     //public async Task<UserDTO?> GetUserByUsername(string username)
     //{
     //  var existing = Users.FirstOrDefault(u => u.Username == username);
@@ -103,7 +146,7 @@ namespace MauiMessenger.Models
 
     public async Task<GroupChatDetailsDTO?> GetGroupChatDetailsAsync(Guid conversationId)
     {
-           if (GroupChatsDetails.TryGetValue(conversationId, out var details))
+      if (GroupChatsDetails.TryGetValue(conversationId, out var details))
       {
         return details;
       }
@@ -288,7 +331,7 @@ namespace MauiMessenger.Models
           //}
         }
 
-        await _signalR.SendUsersStatusesRequest(users);
+        //await _signalR.SendUsersStatusesRequest(users);
 
       }
       else
@@ -298,6 +341,10 @@ namespace MauiMessenger.Models
       }
     }
 
+    public async Task LoadUserStatuseseAsync(List<Guid> userIds)
+    {
+      await _signalR.SendUsersStatusesRequest(userIds.Select(u => u.ToString()).ToHashSet());
+    }
     public async Task<ConversationDTO> UpdateChatAsync(Guid conversationId)
     {
       var existing = GetConversation(conversationId);
@@ -436,29 +483,29 @@ namespace MauiMessenger.Models
         }
 
       }
-        var chatItems = await ProcessChatItems(GetConversation(chatId)!, response);
+      var chatItems = await ProcessChatItems(GetConversation(chatId)!, response);
 
 
 
-        var inds = SearchMessageIndexes(chatItems);
-        ObservableCollection<ChatItem> collection = await GetChatItems(chatId);
-        var indexes = await GetMessageIndexes(chatId);
+      var inds = SearchMessageIndexes(chatItems);
+      ObservableCollection<ChatItem> collection = await GetChatItems(chatId);
+      var indexes = await GetMessageIndexes(chatId);
 
-        collection.Clear();
-        indexes.Clear();
+      collection.Clear();
+      indexes.Clear();
 
-        foreach (var item in chatItems)
-        {
-          collection.Add(item);
-        }
-        foreach (var item in inds)
-        {
-          indexes.Add(item);
-        }
-        //UpdateCollection(collection, chatItems, (a, b) => a.Id == b.Id && a.UpdatedAt == b.UpdatedAt);
-
-
+      foreach (var item in chatItems)
+      {
+        collection.Add(item);
       }
+      foreach (var item in inds)
+      {
+        indexes.Add(item);
+      }
+      //UpdateCollection(collection, chatItems, (a, b) => a.Id == b.Id && a.UpdatedAt == b.UpdatedAt);
+
+
+    }
 
     public async Task AddMessage(MessageDTO message)
     {
