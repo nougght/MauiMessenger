@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="MauiMessenger.Views.RegisterPage"
-             Title="RegisterPage">
+             x:Class="MauiMessenger.Views.RegisterPage">
 
     <Shell.BackButtonBehavior>
         <BackButtonBehavior IsEnabled="False" IsVisible="False" />
@@ -15,14 +14,14 @@
             Margin="10"
             FontSize="26"
             HorizontalOptions="Center"
-            Text="Register"
+            Text="Регистрация"
             VerticalOptions="Center" />
 
             <Entry
             Grid.Row="1"
             Margin="20,10"
             FontSize="26"
-            Placeholder="Username"
+            Placeholder="Имя пользователя"
             Text="{Binding Username}"
             VerticalOptions="Center" />
 
@@ -39,7 +38,7 @@
             
             IsPassword="True"
             FontSize="26"
-            Placeholder="Password"
+            Placeholder="Пароль"
             Text="{Binding Password}"
             VerticalOptions="Center"
             />
@@ -55,7 +54,7 @@
             
             IsPassword="True"
             FontSize="26"
-            Placeholder="Password Confirmation"
+            Placeholder="Подтверждение пароля"
             Text="{Binding PasswordConfirmation}"
             VerticalOptions="Center"
             />
@@ -65,10 +64,17 @@
             Text="{Binding PasswordConfirmationError}"
             TextColor="Red"
             />
-            <CheckBox
-            Grid.Row="7"
-            IsChecked="{Binding UseEmail}"
-            />
+            <HorizontalStackLayout
+                    Grid.Row="7">
+
+                <CheckBox
+                    IsChecked="{Binding UseEmail}"
+                    />
+                <Label
+            FontSize="20"
+                    Text="Использовать почту"/>
+            </HorizontalStackLayout>
+
             <Entry
             Grid.Row="8"
             Margin="20, 10"

@@ -22,7 +22,7 @@ namespace MauiMessenger.Services
     private ConversationDTO? selectedChat;
 
 
-    public ObservableCollection<UserStatus> Statuses { get;} = new();
+    public ObservableCollection<UserStatus> Statuses { get; } = new();
 
     public string? tempUsername;
     public string? tempPassword;
@@ -30,7 +30,7 @@ namespace MauiMessenger.Services
 
     public string? AccessToken { get; private set; }
     public string? RefreshToken { get; private set; }
-    public string? SavedUserId { get; private set; }
+    public Guid? SavedUserId { get; private set; }
 
     public bool IsAuthorised { get => CurrentUser != null; }
 
@@ -52,14 +52,16 @@ namespace MauiMessenger.Services
 
     public UserStatus? GetUserStatusById(Guid userId)
     {
-      return Statuses.FirstOrDefault(s =>  userId == s.UserId);
+      return Statuses.FirstOrDefault(s => userId == s.UserId);
     }
 
     public async Task LoadTokenAndUserId()
     {
       RefreshToken = await SecureStorage.Default.GetAsync("refresh_token");
-      SavedUserId = await SecureStorage.Default.GetAsync("user_id");
+      var userId = await SecureStorage.Default.GetAsync("user_id");
+      SavedUserId = userId == null ? null : new Guid(userId);
     }
+
 
     public async Task SetSession(string accessToken, string refreshToken, UserDTO user)
     {
@@ -68,6 +70,12 @@ namespace MauiMessenger.Services
       CurrentUser = user;
       await SaveCurrentTokenAndUserId();
     }
+
+    public void SetAccessToken(string accessToken)
+    {
+      AccessToken = accessToken;
+    }
+
     public async Task SaveCurrentTokenAndUserId()
     {
       if (RefreshToken != null)
@@ -80,15 +88,18 @@ namespace MauiMessenger.Services
       }
     }
 
-    public async void ResetSession()
+    public async Task ResetSession()
     {
-      AccessToken = null;
-      RefreshToken = null;
-      SavedUserId = null;
-      CurrentUser = null;
-      SelectedChat = null;
-      SecureStorage.Default.Remove("refresh_token");
-      SecureStorage.Default.Remove("user_id");
+      await MainThread.InvokeOnMainThreadAsync(() =>
+      {
+        AccessToken = null;
+        RefreshToken = null;
+        SavedUserId = null;
+        CurrentUser = null;
+        SelectedChat = null;
+        SecureStorage.Default.Remove("refresh_token");
+        SecureStorage.Default.Remove("user_id");
+      });
     }
   }
 }

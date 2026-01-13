@@ -3,7 +3,7 @@
     x:Class="MauiMessenger.Views.LoginPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    Title="LoginPage">
+   >
     <Shell.BackButtonBehavior>
         <BackButtonBehavior IsEnabled="False" IsVisible="False" />
     </Shell.BackButtonBehavior>
@@ -15,13 +15,13 @@
             Margin="10"
             FontSize="26"
             HorizontalOptions="Center"
-            Text="Login"
+            Text="Вход"
             VerticalOptions="Center" />
         <Entry
             Grid.Row="1"
             Margin="20,10"
             FontSize="26"
-            Placeholder="Username"
+            Placeholder="Логин"
             Text="{Binding Username}"
             VerticalOptions="Center" />
 
@@ -39,7 +39,7 @@
             
             IsPassword="True"
             FontSize="26"
-            Placeholder="Password"
+            Placeholder="Пароль"
             Text="{Binding Password}"
             VerticalOptions="Center"
             />

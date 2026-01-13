@@ -1,13 +1,14 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.DependencyInjection;
+using MauiMessenger.ApiClient;
+using MauiMessenger.Models;
+using MauiMessenger.Services;
+using MauiMessenger.Views;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-
-using MauiMessenger.Services;
-using MauiMessenger.Models;
-using MauiMessenger.ApiClient;
 
 namespace MauiMessenger.ViewModels
 {
@@ -18,16 +19,19 @@ namespace MauiMessenger.ViewModels
     private readonly DataRepository _data;
     private readonly AppStateService _appState;
     private readonly ChatService _chatService;
+    private readonly AuthService _authService;
 
 
     public MainViewModel(SignalRService signalR, Client apiClient,
-      DataRepository data, AppStateService state, ChatService chatService)
+      DataRepository data, AppStateService state, ChatService chatService,
+      AuthService authService)
     {
       _signalR = signalR;
       _api = apiClient;
       _data = data;
       _appState = state;
       _chatService = chatService;
+      _authService = authService;
 
 
       // trying without mainthread invoke
@@ -65,6 +69,35 @@ namespace MauiMessenger.ViewModels
           await _data.MarkMessagesRead(chatId, userId, readPositionId, readAt);
         }
       };
+    }
+
+
+
+    public async Task TryEnter()
+    {
+      try
+      {
+
+        await _appState.LoadTokenAndUserId();
+
+        if (_appState.RefreshToken != null && _appState.SavedUserId != null)
+        {
+          var accessToken = await _api.RefreshAsync(_appState.RefreshToken, _appState.SavedUserId);
+          if (!string.IsNullOrEmpty(accessToken))
+          {
+            _appState.SetAccessToken(accessToken);
+            var user = await _api.UserAsync(_appState.SavedUserId);
+            await _authService.InitSession(accessToken!, _appState.RefreshToken, user!);
+            Application.Current.MainPage = new AppShell();
+            return;
+          }
+        }
+
+      }
+      catch (Exception ex)
+      {
+        throw;
+      }
     }
   }
 }

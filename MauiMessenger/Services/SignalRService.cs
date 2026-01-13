@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace MauiMessenger.Services
@@ -47,16 +48,8 @@ namespace MauiMessenger.Services
           .WithAutomaticReconnect()
           .Build();
 
-      _hubConnection.Closed += async (error) =>
-      {
-        
-        await Application.Current.MainPage.DisplayAlert("Внимание", "SignalR подключение прервано - Closed\nПереподключение через 5 сек.", "OK");
-        //SendLocalMessage(new MessageDto { Content = "Подключение закрыто...", CreatedAt = DateTime.UtcNow });
-        IsConnected = false;
-        HubConnectionClosed?.Invoke();
-        await Task.Delay(5000);
-        await Connect();
-      };
+      _hubConnection.Closed += OnClosed;
+      ;
 
       Debug.WriteLine("SignalRService CREATED");
 
@@ -84,13 +77,26 @@ namespace MauiMessenger.Services
       });
 
 
-      _hubConnection.On <HashSet<UserStatusDto>>("ReceiveUsersStatuses", (statuses) =>
+      _hubConnection.On<HashSet<UserStatusDto>>("ReceiveUsersStatuses", (statuses) =>
       {
         OnStatusesReceived?.Invoke(statuses);
       });
 
 
       IsConnected = false;
+    }
+
+    public async Task OnClosed(Exception? error)
+    {
+      await MainThread.InvokeOnMainThreadAsync(async () =>
+      {
+        await Application.Current.MainPage.DisplayAlert("Внимание", "SignalR подключение прервано - Closed\nПереподключение через 5 сек.", "OK");
+      });
+        //SendLocalMessage(new MessageDto { Content = "Подключение закрыто...", CreatedAt = DateTime.UtcNow });
+      IsConnected = false;
+      HubConnectionClosed?.Invoke();
+      await Task.Delay(5000);
+      await Connect();
     }
 
     public async Task Connect()
@@ -110,10 +116,10 @@ namespace MauiMessenger.Services
 
     public async Task Disconnect()
     {
-
+      _hubConnection.Closed -= OnClosed;
       await _hubConnection.StopAsync();
       IsConnected = false;
-      await Application.Current.MainPage.DisplayAlert("Внимание", "SignalR подключение завершено - Disconnect()", "OK");
+      //await Application.Current.MainPage.DisplayAlert("Внимание", "SignalR подключение завершено - Disconnect()", "OK");
       //SendLocalMessage(new MessageDto { Content = "Вы покинули...", CreatedAt = DateTime.UtcNow });
 
     }
@@ -128,13 +134,13 @@ namespace MauiMessenger.Services
       await _hubConnection.InvokeAsync("Register", userId);
     }
 
-//    public async Task UpdateReadPosition(ChatDTO ) {
-//    await _hubConnection.InvokeAsync("UpdateReadPosition", new ReadPositionDto
-//{
-//    ChatId = chatId,
-//    UserId = currentUserId,
-//    LastReadMessageId = messageId
-//  });
+    //    public async Task UpdateReadPosition(ChatDTO ) {
+    //    await _hubConnection.InvokeAsync("UpdateReadPosition", new ReadPositionDto
+    //{
+    //    ChatId = chatId,
+    //    UserId = currentUserId,
+    //    LastReadMessageId = messageId
+    //  });
 
     public async Task SendMessage(MessageDTO message)
     {

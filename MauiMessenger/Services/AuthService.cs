@@ -25,6 +25,7 @@ namespace MauiMessenger.Services
       _signalR = signalR;
     }
 
+
     public async Task InitSession(string accessToken, string refreshToken, UserDTO user)
     {
       await _appState.SetSession(accessToken, refreshToken, user);
@@ -32,6 +33,13 @@ namespace MauiMessenger.Services
       await _signalR.RegisterInHub(user.UserId);
       await _data.LoadChatsAsync();
       await _data.LoadContactsAsync();
+    }
+
+    public async Task Logout()
+    {
+      await _appState.ResetSession();
+      await _signalR.Disconnect();
+      await NavigationService.GoToLoginPage();
     }
 
     public async Task<AuthResponseStatus> TrySignUp(string username, string password, string? email = null, string? code = null)

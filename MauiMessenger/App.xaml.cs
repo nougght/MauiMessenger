@@ -1,6 +1,7 @@
-﻿using MauiMessenger.Views;
-using MauiMessenger.ViewModels;
+﻿using CommunityToolkit.Mvvm.DependencyInjection;
 using MauiMessenger.Services;
+using MauiMessenger.ViewModels;
+using MauiMessenger.Views;
 
 namespace MauiMessenger
 {
@@ -24,12 +25,9 @@ namespace MauiMessenger
       InitializeComponent();
 
       var mainVM = services.GetService<MainViewModel>();
-
-      var vm = services.GetService<RegisterViewModel>();
-
       // запуск страницы входа
-      MainPage = new NavigationPage(new RegisterPage(vm));
-
+      NavigationService.GoToRegisterPage();
+      mainVM.TryEnter();
 
     }
 
@@ -40,6 +38,7 @@ namespace MauiMessenger
       window.Height = 700;
       return window;
     }
+
     private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
       var ex = e.ExceptionObject as Exception;

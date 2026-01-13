@@ -10,7 +10,7 @@ namespace MauiMessenger
 #if WINDOWS || MACCATALYST
       FlyoutBehavior = FlyoutBehavior.Flyout; 
 #else
-      FlyoutBehavior = FlyoutBehavior.Disabled;
+      FlyoutBehavior = FlyoutBehavior.Flyout;
 #endif
       InitializeComponent();
 

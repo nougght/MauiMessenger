@@ -1,9 +1,14 @@
+using MauiMessenger.ViewModels;
+
 namespace MauiMessenger.Views;
 
 public partial class SettingsPage : ContentPage
 {
-	public SettingsPage()
+	SettingsTabViewModel viewModel;
+	public SettingsPage(SettingsTabViewModel vm)
 	{
 		InitializeComponent();
+		viewModel = vm;
+		BindingContext = viewModel;
 	}
 }

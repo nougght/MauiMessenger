@@ -37,7 +37,6 @@ namespace MauiMessenger.Models
 
     public async Task<UserDTO?> GetUser(Guid? userId)
     {
-
       var existing = Users.FirstOrDefault(u => u.UserId == userId);
       if (existing == null)
       {
