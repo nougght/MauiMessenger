@@ -3,6 +3,7 @@
 Кроссплатформенный мессенджер на `.NET MAUI` (Android / iOS / Windows / MacCatalyst) с REST API и SignalR.
 
 Бэкенд (ASP.NET Core) - <https://github.com/nougght/MessengerBackend>
+<a href="https://postimg.cc/876g47pQ" target="_blank"><img src="https://i.postimg.cc/cH8S6Lps/msg.png" alt="image-2"></a><br><br>
 ## Функционал
 
 - Авторизация с поддержкой access/refresh токенов
